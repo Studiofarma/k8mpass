@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,8 +37,11 @@ func getConnection() (*kubernetes.Clientset, error) {
 	<-sleep
 	k8s, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
-
 		return nil, err
+	}
+	res := k8s.RESTClient().Get().AbsPath("/healthz").Do(context.TODO())
+	if res.Error() != nil {
+		return nil, errors.New(res.Error().Error())
 	}
 	return k8s, nil
 }
