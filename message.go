@@ -7,3 +7,7 @@ type errMsg error
 type clusterConnectedMsg struct {
 	clientset *kubernetes.Clientset
 }
+
+type wakeUpReviewMsg struct {
+	body string
+}
