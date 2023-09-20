@@ -19,14 +19,15 @@ type K8mpassModel struct {
 	namespaces        []Namespace
 	namespacesList    list.Model
 	selectedNamespace string
+	isAwaken          bool
 }
 
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	return K8mpassModel{
-		spinner: s,
-		command: WakeUpReviewOperation,
+		spinner:  s,
+		isAwaken: false,
 	}
 }
 
@@ -47,6 +48,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if len(m.namespacesList.Items()) > 0 {
 				m.selectedNamespace = m.namespacesList.SelectedItem().FilterValue()
+				cmds = append(cmds, WakeUpReviewOperation.Command(m, m.selectedNamespace))
 			} else {
 				m.selectedNamespace = ""
 			}
@@ -64,6 +66,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 50, 15)
 		m.namespacesList.SetShowStatusBar(false)
 		m.namespacesList.SetShowHelp(false)
+		m.namespacesList.Title = "Select a namespace to wake-up"
+	case wakeUpReviewMsg:
+		m.isAwaken = true
 	case tea.WindowSizeMsg:
 		if len(m.namespacesList.Items()) > 0 {
 			h, v := docStyle.GetFrameSize()
@@ -92,7 +97,13 @@ func (m K8mpassModel) View() string {
 	if m.isConnected && len(m.namespacesList.Items()) > 0 {
 		s += "Namespaces: " + strconv.Itoa(len(m.namespacesList.Items())) + "\n"
 		s += docStyle.Render(m.namespacesList.View())
-		s += "\n Selected: " + m.selectedNamespace
+		if m.selectedNamespace != "" {
+			if m.isAwaken == true {
+				s += "\n" + m.selectedNamespace + " is awakening"
+			} else {
+				s += "\n Waking up: " + m.selectedNamespace
+			}
+		}
 	}
 
 	return s + "\n"
