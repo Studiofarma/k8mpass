@@ -44,11 +44,17 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
+		case "enter":
+			m.inputRequired = false
+			command := m.command.Command(m, m.textInput.Value())
+			cmds = append(cmds, command)
 		}
 
-		var cmd tea.Cmd
-		m.textInput, cmd = m.textInput.Update(msg)
-		cmds = append(cmds, cmd)
+		if m.inputRequired {
+			var cmd tea.Cmd
+			m.textInput, cmd = m.textInput.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 
 	case clusterConnectedMsg:
 		m.isConnected = true
