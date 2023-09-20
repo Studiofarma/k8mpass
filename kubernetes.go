@@ -60,17 +60,6 @@ func defaultKubeConfigFilePath() string {
 
 func getNamespaces(client *kubernetes.Clientset) (*corev1.NamespaceList, error) {
 	return client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	//sleep := make(chan string)
-	//go func(c chan string) {
-	//	time.Sleep(200 * time.Millisecond)
-	//	close(c)
-	//}(sleep)
-	//nl, err := client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	//if err != nil {
-	//	return nil, err
-	//}
-	//<-sleep
-	//return nl, nil
 }
 
 func wakeupReview(client *kubernetes.Clientset, namespace string) error {
