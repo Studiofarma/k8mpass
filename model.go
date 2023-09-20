@@ -8,16 +8,17 @@ import (
 	"strconv"
 )
 
-//var docStyle = lipgloss.NewStyle().Margin(1, 2)
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
 type K8mpassModel struct {
-	error          errMsg
-	cluster        kubernetesCluster
-	spinner        spinner.Model
-	isConnected    bool
-	command        NamespaceOperation
-	namespaces     []Namespace
-	namespacesList list.Model
+	error             errMsg
+	cluster           kubernetesCluster
+	spinner           spinner.Model
+	isConnected       bool
+	command           NamespaceOperation
+	namespaces        []Namespace
+	namespacesList    list.Model
+	selectedNamespace string
 }
 
 func initialModel() K8mpassModel {
@@ -43,6 +44,12 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
+		case "enter":
+			if len(m.namespacesList.Items()) > 0 {
+				m.selectedNamespace = m.namespacesList.SelectedItem().FilterValue()
+			} else {
+				m.selectedNamespace = ""
+			}
 		}
 	case clusterConnectedMsg:
 		m.isConnected = true
@@ -54,12 +61,14 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i := 0; i < len(msg.namespaces); i++ {
 			items = append(items, msg.namespaces[i])
 		}
-		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 0, 0)
-		//case tea.WindowSizeMsg:
-		//	if len(m.namespacesList.Items()) > 0 {
-		//		h, v := docStyle.GetFrameSize()
-		//		m.namespacesList.SetSize(msg.Width-h, msg.Height-v)
-		//	}
+		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 50, 15)
+		m.namespacesList.SetShowStatusBar(false)
+		m.namespacesList.SetShowHelp(false)
+	case tea.WindowSizeMsg:
+		if len(m.namespacesList.Items()) > 0 {
+			h, v := docStyle.GetFrameSize()
+			m.namespacesList.SetSize(msg.Width-h, msg.Height-v)
+		}
 	}
 	if !m.isConnected {
 		s, cmd := m.spinner.Update(msg)
@@ -82,7 +91,8 @@ func (m K8mpassModel) View() string {
 	}
 	if m.isConnected && len(m.namespacesList.Items()) > 0 {
 		s += "Namespaces: " + strconv.Itoa(len(m.namespacesList.Items())) + "\n"
-		s += lipgloss.NewStyle().Margin(1, 2).Render(m.namespacesList.View())
+		s += docStyle.Render(m.namespacesList.View())
+		s += "\n Selected: " + m.selectedNamespace
 	}
 
 	return s + "\n"
