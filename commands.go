@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -54,15 +53,15 @@ var OperationSelected = NamespaceOperation{
 	},
 }
 
+// todo IP SPRINT
 var GetAllPodsOperation = NamespaceOperation{
 	Name: "Get pods",
 	Command: func(model K8mpassModel, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			podsInfo, err := getPods(model.cluster.kubernetes, namespace)
+			_, err := getPods(model.cluster.kubernetes, namespace)
 			if err != nil {
 				return errMsg(err)
 			}
-			fmt.Println(podsInfo) //just for checking it out
 			return podsInfoMsg{}
 		}
 	},

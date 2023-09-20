@@ -32,7 +32,7 @@ type podInfo struct {
 	numberOfRestarts int
 }
 
-func (n namespacePodsInfo) calculateNamespaceStatus() {
+func (n *namespacePodsInfo) calculateNamespaceStatus() {
 	n.numberErrorPods = 0
 	n.numberRunningPods = 0
 	n.status = "Ok"

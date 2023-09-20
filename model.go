@@ -97,9 +97,12 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case nameSpaceSelectedMsg:
 		m.nameSpace = msg.body
+		_podsInfo, _ := getPods(m.cluster.kubernetes, m.nameSpace)
+		m.namespacePodsInfo.podsInfo = _podsInfo
+		m.namespacePodsInfo.calculateNamespaceStatus()
 		operations := []list.Item{item{"op1"}, item{"op2"}}
 		m.list = list.New(operations, itemDelegate{}, 80, 15)
-		m.list.Title = "Select the operation"
+		m.list.Title = m.namespacePodsInfo.status + " | Select the operation"
 		m.command = OperationSelected
 	case operationSelectedMsg:
 		fmt.Printf("%s", msg.body)
