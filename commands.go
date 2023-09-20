@@ -24,7 +24,7 @@ var WakeUpReviewOperation = NamespaceOperation{
 	Name: "Wake up review app",
 	Command: func(model K8mpassModel, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			err := wakeupReview(model.cluster.kubernetes, namespace)
+			err := wakeupReview(model.cluster.GetClientset(), namespace)
 			if err != nil {
 				return errMsg(err)
 			}
@@ -37,7 +37,7 @@ var NamespacesListOperation = NamespaceOperation{
 	Name: "Wake up review app",
 	Command: func(model K8mpassModel, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			err := wakeupReview(model.cluster.kubernetes, namespace)
+			err := wakeupReview(model.cluster.GetClientset(), namespace)
 			if err != nil {
 				return errMsg(err)
 			}

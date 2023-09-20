@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/charmbracelet/bubbles/list"
+	"k8s.io/client-go/kubernetes"
 	"testing"
 )
 
@@ -22,6 +23,20 @@ func TestModelConnection(t *testing.T) {
 	}
 }
 
+type fakeCluster struct {
+}
+
+func (f fakeCluster) FetchNamespaces() ([]string, error) {
+	return []string{"X", "Y"}, nil
+}
+
+func (f fakeCluster) SetClientset(clientset *kubernetes.Clientset) {
+}
+
+func (f fakeCluster) GetClientset() *kubernetes.Clientset {
+	return nil
+}
+
 func TestFetchNamespace(t *testing.T) {
 	var items = []list.Item{
 		item("X"),
@@ -31,6 +46,9 @@ func TestFetchNamespace(t *testing.T) {
 	l := list.New(items, list.NewDefaultDelegate(), 2, 5)
 
 	model := initialModel()
+
+	model.cluster = fakeCluster{}
+
 	updatedModel, _ := model.Update(fetchNamespacesMsg{})
 	if updatedModel.(K8mpassModel).namespacesList.Items()[0] != l.Items()[0] {
 		t.Fatalf("The list of namespace is not that expected")

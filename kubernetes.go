@@ -15,8 +15,26 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+type IkubernetesCluster interface {
+	FetchNamespaces() ([]string, error)
+	SetClientset(*kubernetes.Clientset)
+	GetClientset() *kubernetes.Clientset
+}
+
 type kubernetesCluster struct {
 	kubernetes *kubernetes.Clientset
+}
+
+func (c kubernetesCluster) FetchNamespaces() ([]string, error) {
+	return []string{"X", "Y"}, nil
+}
+
+func (c kubernetesCluster) SetClientset(cs *kubernetes.Clientset) {
+	c.kubernetes = cs
+}
+
+func (c kubernetesCluster) GetClientset() (clientset *kubernetes.Clientset) {
+	return c.kubernetes
 }
 
 func getConnection() (*kubernetes.Clientset, error) {

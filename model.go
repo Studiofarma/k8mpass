@@ -13,7 +13,7 @@ func (i item) FilterValue() string { return "" }
 
 type K8mpassModel struct {
 	error                    errMsg
-	cluster                  kubernetesCluster
+	cluster                  IkubernetesCluster
 	clusterConnectionSpinner spinner.Model
 	textInput                textinput.Model
 	isConnected              bool
@@ -64,15 +64,19 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case clusterConnectedMsg:
 		m.isConnected = true
-		m.cluster.kubernetes = msg.clientset
+		m.cluster = kubernetesCluster{
+			kubernetes: msg.clientset,
+		}
 		return m, func() tea.Msg {
 			return fetchNamespacesMsg{}
 		}
 	case fetchNamespacesMsg:
-		var items = []list.Item{
-			item("X"),
-			item("Y"),
+		var items []list.Item
+		namespaces, _ := m.cluster.FetchNamespaces()
+		for _, namespace := range namespaces {
+			items = append(items, item(namespace))
 		}
+
 		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 2, 5)
 		return m, nil
 
