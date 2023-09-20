@@ -3,27 +3,29 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"strconv"
 )
 
 type K8mpassModel struct {
-	error                    errMsg
-	cluster                  kubernetesCluster
-	clusterConnectionSpinner spinner.Model
-	isConnected              bool
-	command                  NamespaceOperation
+	error       errMsg
+	cluster     kubernetesCluster
+	spinner     spinner.Model
+	isConnected bool
+	command     NamespaceOperation
+	namespaces  []Namespace
 }
 
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	return K8mpassModel{
-		clusterConnectionSpinner: s,
-		command:                  WakeUpReviewOperation,
+		spinner: s,
+		command: WakeUpReviewOperation,
 	}
 }
 
 func (m K8mpassModel) Init() tea.Cmd {
-	return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
+	return tea.Batch(m.spinner.Tick, connectToClusterCmd)
 }
 
 func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -40,12 +42,13 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "CHANGE-ME")
-		cmds = append(cmds, command)
+		cmds = append(cmds, fetchNamespacesCmd(m.cluster.kubernetes))
+	case fetchedNamespacesMsg:
+		m.namespaces = msg.namespaces
 	}
 	if !m.isConnected {
-		s, cmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = s
+		s, cmd := m.spinner.Update(msg)
+		m.spinner = s
 		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
@@ -54,11 +57,12 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m K8mpassModel) View() string {
 	s := ""
 	if !m.isConnected {
-		s += m.clusterConnectionSpinner.View()
+		s += m.spinner.View()
 		s += "Connecting to the cluster..."
-	} else {
-		s += "Connection successful! Press esc to quit"
 	}
-	s += "\n"
-	return s
+	if m.isConnected && m.namespaces != nil {
+		s += "Namespaces: " + strconv.Itoa(len(m.namespaces))
+	}
+
+	return s + "\n"
 }

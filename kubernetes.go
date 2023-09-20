@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path/filepath"
@@ -55,6 +56,21 @@ func defaultKubeConfigFilePath() string {
 		panic("error getting user home dir: %v\n")
 	}
 	return filepath.Join(userHomeDir, ".kube", "config")
+}
+
+func getNamespaces(client *kubernetes.Clientset) (*corev1.NamespaceList, error) {
+	return client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	//sleep := make(chan string)
+	//go func(c chan string) {
+	//	time.Sleep(200 * time.Millisecond)
+	//	close(c)
+	//}(sleep)
+	//nl, err := client.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	//if err != nil {
+	//	return nil, err
+	//}
+	//<-sleep
+	//return nl, nil
 }
 
 func wakeupReview(client *kubernetes.Clientset, namespace string) error {
