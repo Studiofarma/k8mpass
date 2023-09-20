@@ -33,16 +33,6 @@ func fetchNamespacesCmd(clientset *kubernetes.Clientset) tea.Cmd {
 	}
 }
 
-//func namespacesFetch(m model) tea.Cmd {
-//	return func() tea.Msg {
-//		n, err := getNamespaces(m.kube.clientset)
-//		if err != nil {
-//			return errMsg(err)
-//		}
-//		return namespacesMsg{n}
-//	}
-//}
-
 type K8mpassCommand func(model K8mpassModel, namespace string) tea.Cmd
 
 type NamespaceOperation struct {
