@@ -8,6 +8,9 @@ type clusterConnectedMsg struct {
 	clientset *kubernetes.Clientset
 }
 
+type fetchNamespacesMsg struct {
+}
+
 type wakeUpReviewMsg struct {
 	body string
 }

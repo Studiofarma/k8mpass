@@ -59,10 +59,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		m.inputRequired = true
-		m.textInput.Focus()
-		//command := m.command.Command(m, "review-devops-new-filldata")
-		//cmds = append(cmds, command)
+		return m, func() tea.Msg {
+			return fetchNamespacesMsg{}
+		}
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
