@@ -13,6 +13,7 @@ type K8mpassModel struct {
 	command                  NamespaceOperation
 }
 
+/*
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
@@ -21,6 +22,7 @@ func initialModel() K8mpassModel {
 		command:                  WakeUpReviewOperation,
 	}
 }
+*/
 
 func (m K8mpassModel) Init() tea.Cmd {
 	return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
