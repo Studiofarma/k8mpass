@@ -57,7 +57,11 @@ func (m K8mpassModel) View() string {
 		s += m.clusterConnectionSpinner.View()
 		s += "Connecting to the cluster..."
 	} else {
-		s += "Connection successful! Press esc to quit"
+		if m.error != nil {
+			s += m.error.Error()
+		} else {
+			s += "Connection successful! Press esc to quit"
+		}
 	}
 	return s
 }
