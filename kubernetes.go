@@ -54,7 +54,7 @@ func defaultKubeConfigFilePath() string {
 	if err != nil {
 		panic("error getting user home dir: %v\n")
 	}
-	return filepath.Join(userHomeDir, ".kube", "config")
+	return filepath.Join(userHomeDir, ".kube", "config_reviewapp_next.dist")
 }
 
 func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
