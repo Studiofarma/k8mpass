@@ -22,7 +22,7 @@ var (
 )
 
 func main() {
-	p := tea.NewProgram(initialProjectModel())
+	p := tea.NewProgram(initialNamespaceModel())
 	_, err := p.Run()
 	if err != nil {
 		fmt.Println(err)

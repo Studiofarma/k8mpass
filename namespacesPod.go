@@ -30,7 +30,7 @@ func initialNamespaceModel() NamespacesModel {
 	)
 	namespaces := getNamespaces(createClientSet(getConfig()))
 	delegate := newItemDelegate(newDelegateKeyMap())
-	namespaceList := list.New(namespaces, delegate, 80, 15)
+	namespaceList := list.New(namespaces, delegate, 80, 12)
 	namespaceList.Title = "Namespaces"
 	namespaceList.Styles.Title = titleStyle
 	namespaceList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -45,7 +45,7 @@ func initialNamespaceModel() NamespacesModel {
 	}
 
 	return NamespacesModel{
-		state:                    namespacesView,
+		state:                    1,
 		clusterConnectionSpinner: s,
 		list:                     namespaceList,
 	}
@@ -100,12 +100,6 @@ func (m NamespacesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if !m.isConnected {
-		s, cmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = s
-		cmds = append(cmds, cmd)
-	}
-
 	newListModel, cmd := m.list.Update(msg)
 	m.list = newListModel
 	cmds = append(cmds, cmd)
@@ -113,11 +107,5 @@ func (m NamespacesModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m NamespacesModel) View() string {
-	if m.state == namespacesView {
-		return appStyle.Render(m.list.View())
-		//return s
-	} else {
-		return ""
-	}
-
+	return appStyle.Render(m.list.View())
 }

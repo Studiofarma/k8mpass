@@ -7,12 +7,12 @@ import (
 
 type sessionState int
 
-const (
-	mainView       sessionState = 0
-	namespacesView sessionState = 1
-	podsView       sessionState = 2
-	cronjobsView                = 3
-)
+//const (
+//	mainView       sessionState = 0
+//	namespacesView sessionState = 1
+//	podsView       sessionState = 2
+//	cronjobsView                = 3
+//)
 
 type K8mpassModel struct {
 	state                    sessionState
@@ -24,25 +24,13 @@ type K8mpassModel struct {
 	command                  NamespaceOperation
 }
 
-func initialProjectModel(m K8mpassModel) K8mpassModel {
-	if m == nil {
-		s := spinner.New()
-		s.Spinner = spinner.Line
+func initialProjectModel() K8mpassModel {
+	s := spinner.New()
+	s.Spinner = spinner.Line
 
-		return K8mpassModel{
-			state:                    mainView,
-			clusterConnectionSpinner: s,
-		}
-	} else {
-		return K8mpassModel{
-			state:                    m.state,
-			entry:                    m.entry,
-			error:                    m.error,
-			cluster:                  m.cluster,
-			clusterConnectionSpinner: m.clusterConnectionSpinner,
-			isConnected:              m.isConnected,
-			command:                  m.command,
-		}
+	return K8mpassModel{
+		state:                    0,
+		clusterConnectionSpinner: s,
 	}
 }
 
@@ -57,6 +45,12 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		m.error = msg
 		return m, tea.Quit
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "esc":
+			return m, tea.Quit
+		}
 
 	case clusterConnectedMsg:
 		m.isConnected = true
@@ -75,22 +69,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m K8mpassModel) View() string {
-	s := "Sono bello bravo e funzionante"
-	if m.entry == nil {
-		n := initialNamespaceModel()
-		m.entry = n
-		return appStyle.Render(n.View())
-	} else {
-		switch m.entry.(type) {
-		case K8mpassModel:
-			//appStyle.Render(s)
-			n := initialNamespaceModel()
-			m.entry = n
-			initialProjectModel(m)
-			return appStyle.Render(n.View())
-		}
+	//s := "Sono bello bravo e funzionante"
 
-	}
+	return appStyle.Render(initialNamespaceModel().View())
 
-	return s
+	//return s
 }
