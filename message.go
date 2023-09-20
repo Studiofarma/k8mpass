@@ -12,5 +12,8 @@ type wakeUpReviewMsg struct {
 	body string
 }
 
+type podListMsg struct {
+	items []string
+}
 type namespaceSelectedMsg struct {
 }

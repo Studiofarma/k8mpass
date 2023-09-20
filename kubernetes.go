@@ -82,3 +82,15 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 
 	return err
 }
+
+func listPods(clientset *kubernetes.Clientset, namespace string) ([]string, error) {
+	nsPods := []string{}
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nsPods, err
+	}
+	for _, pod := range pods.Items {
+		nsPods = append(nsPods, pod.Name)
+	}
+	return nsPods, nil
+}

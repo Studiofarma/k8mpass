@@ -33,6 +33,19 @@ var WakeUpReviewOperation = NamespaceOperation{
 	},
 }
 
+var ListPodsOperation = NamespaceOperation{
+	Name: "List pods",
+	Command: func(model K8mNamespaceModel, namespace string) tea.Cmd {
+		return func() tea.Msg {
+			pods, err := listPods(model.cluster.kubernetes, namespace)
+			if err != nil {
+				return errMsg(err)
+			}
+			return podListMsg{pods}
+		}
+	},
+}
+
 func namespaceSelect() tea.Msg {
 	return namespaceSelectedMsg{}
 }
