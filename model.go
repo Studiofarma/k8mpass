@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,13 +18,13 @@ var (
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1)
+		Foreground(lipgloss.Color("#FFFDF5")).
+		Background(lipgloss.Color("#25A065")).
+		Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-				Render
+		Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+		Render
 )
 
 type listKeyMap struct {
