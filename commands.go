@@ -13,7 +13,7 @@ func clusterConnect() tea.Msg {
 	return clusterConnectedMsg{cs}
 }
 
-type K8mpassCommand func(model K8mpassModel, namespace string) tea.Cmd
+type K8mpassCommand func(model K8mNamespaceModel, namespace string) tea.Cmd
 
 type NamespaceOperation struct {
 	Name    string
@@ -22,7 +22,7 @@ type NamespaceOperation struct {
 
 var WakeUpReviewOperation = NamespaceOperation{
 	Name: "Wake up review app",
-	Command: func(model K8mpassModel, namespace string) tea.Cmd {
+	Command: func(model K8mNamespaceModel, namespace string) tea.Cmd {
 		return func() tea.Msg {
 			err := wakeupReview(model.cluster.kubernetes, namespace)
 			if err != nil {
@@ -31,4 +31,8 @@ var WakeUpReviewOperation = NamespaceOperation{
 			return wakeUpReviewMsg{}
 		}
 	},
+}
+
+func namespaceSelect() tea.Msg {
+	return namespaceSelectedMsg{}
 }

@@ -11,6 +11,7 @@ type K8mpassModel struct {
 	clusterConnectionSpinner spinner.Model
 	isConnected              bool
 	command                  NamespaceOperation
+	namespace                string
 }
 
 /*
@@ -26,31 +27,6 @@ func initialModel() K8mpassModel {
 
 func (m K8mpassModel) Init() tea.Cmd {
 	return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
-}
-
-func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	switch msg := msg.(type) {
-	case errMsg:
-		m.error = msg
-		return m, tea.Quit
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "esc":
-			return m, tea.Quit
-		}
-	case clusterConnectedMsg:
-		m.isConnected = true
-		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
-		cmds = append(cmds, command)
-	}
-	if !m.isConnected {
-		s, cmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = s
-		cmds = append(cmds, cmd)
-	}
-	return m, tea.Batch(cmds...)
 }
 
 func (m K8mpassModel) View() string {

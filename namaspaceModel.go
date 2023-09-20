@@ -62,6 +62,8 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// the selected state for the item that the cursor is pointing at.
 		case "enter", " ":
 			m.selected = m.choices[m.cursor]
+			cmd := WakeUpReviewOperation.Command(m, m.selected)
+			return m, tea.Batch(cmd)
 		}
 		//return m, nil
 	case clusterConnectedMsg:
@@ -75,7 +77,8 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, item := range namespaces.Items {
 			m.choices = append(m.choices, item.ObjectMeta.Name)
 		}
-
+	case namespaceSelectedMsg:
+		tea.Batch()
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
@@ -110,6 +113,10 @@ func (m K8mNamespaceModel) View() string {
 
 			// Render the row
 			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		}
+
+		if m.error != nil {
+			s += m.error.Error()
 		}
 
 		// The footer
