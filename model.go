@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/key"
@@ -8,9 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"io"
+	v1 "k8s.io/api/core/v1"
 	"math/rand"
 	"time"
 )
@@ -94,6 +94,29 @@ func newDelegateKeyMap() *delegateKeyMap {
 	}
 }
 
+func getPodLogs(nameSpace string, podName string) string {
+	podLogOpts := v1.PodLogOptions{}
+	config := getConfig()
+	// creates the clientset
+	clientset := createClientSet(config)
+
+	req := clientset.CoreV1().Pods(nameSpace).GetLogs(podName, &podLogOpts)
+	podLogs, err := req.Stream(context.TODO())
+	if err != nil {
+		return "error in opening stream"
+	}
+	defer podLogs.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		return "error in copy information from podLogs to buf"
+	}
+	str := buf.String()
+
+	return str
+}
+
 func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
@@ -110,7 +133,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return m.NewStatusMessage(statusMessageStyle("You chose " + title))
+				return m.NewStatusMessage(statusMessageStyle("POD LOG FOR " + title + "\n" + getPodLogs("review-hack-cgmgpharm-47203-be", title)))
 
 			case key.Matches(msg, keys.remove):
 				index := m.Index()
@@ -145,23 +168,8 @@ func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 
-	config, err := clientcmd.BuildConfigFromFlags("", defaultKubeConfigFilePath())
-	if err != nil {
-		panic(err.Error())
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	pods, err := clientset.CoreV1().Pods("review-hack-cgmgpharm-47203-be").List(context.TODO(), metav1.ListOptions{})
-	numPods := len(pods.Items)
-	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
-
-	items := make([]list.Item, numPods)
-	for i := 0; i < numPods; i++ {
-		items[i] = item{title: pods.Items[i].Name}
-		//fmt.Printf("POD NAME" + pods.Items[i].Name + "\n")
-	}
-
 	delegate := newItemDelegate(newDelegateKeyMap())
-	groceryList := list.New(items, delegate, 80, 15)
+	groceryList := list.New(setPodList(), delegate, 80, 15)
 	groceryList.Title = "Stocazzo"
 	groceryList.Styles.Title = titleStyle
 	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -182,6 +190,19 @@ func initialModel() K8mpassModel {
 		keys:                     listKeys,
 		delegateKeys:             delegateKeys,
 	}
+}
+
+func setPodList() []list.Item {
+	clientSet := createClientSet(getConfig())
+	pods := getPods(clientSet, "review-hack-cgmgpharm-47203-be")
+	numPods := len(pods.Items)
+	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+
+	items := make([]list.Item, numPods)
+	for i := 0; i < numPods; i++ {
+		items[i] = item{title: pods.Items[i].Name}
+	}
+	return items
 }
 
 func (m K8mpassModel) Init() tea.Cmd {
