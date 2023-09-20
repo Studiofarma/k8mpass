@@ -108,3 +108,18 @@ func getPods(clientset *kubernetes.Clientset, nameSpace string) *v1.PodList {
 	}
 	return pods
 }
+
+func getNamespaces(clientset *kubernetes.Clientset) ([]string, error) {
+	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Found %d namespaces\n", len(namespaces.Items))
+	namespacesNames := make([]string, len(namespaces.Items))
+	for i := 0; i < len(namespaces.Items); i++ {
+		namespacesNames[i] = namespaces.Items[i].Name
+	}
+
+	return namespacesNames, err
+}
