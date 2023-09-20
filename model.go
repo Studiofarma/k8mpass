@@ -147,7 +147,7 @@ func namespaceItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 					podNames[i] = item{title: podList.Items[i].Name}
 				}
 
-				m.SetDelegate(podItemDelegate(newDelegateKeyMap()))
+				m.SetDelegate(podItemDelegate(newDelegateKeyMap(), title))
 				m.Title = "Selected namespace: " + title + " pod to see logs"
 				return m.SetItems(podNames)
 
@@ -177,7 +177,7 @@ func namespaceItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 	return d
 }
 
-func podItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
+func podItemDelegate(keys *delegateKeyMap, namespace string) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
@@ -193,7 +193,7 @@ func podItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return m.SetItems(getPodLogs("review-hack-cgmgpharm-47203-be", title))
+				return m.SetItems(getPodLogs(namespace, title))
 
 			case key.Matches(msg, keys.remove):
 				index := m.Index()
