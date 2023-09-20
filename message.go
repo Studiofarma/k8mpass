@@ -15,6 +15,10 @@ type namespacesNamesMsg struct {
 	body []string
 }
 
+type podsInfoMsg struct {
+	body namespacePodsInfo
+}
+
 type wakeUpReviewMsg struct {
 	body string
 }

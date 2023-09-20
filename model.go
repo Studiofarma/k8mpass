@@ -20,6 +20,7 @@ type K8mpassModel struct {
 	cluster                  kubernetesCluster
 	clusterConnectionSpinner spinner.Model
 	isConnected              bool
+	namespacePodsInfo        namespacePodsInfo
 	command                  NamespaceOperation
 	list                     list.Model
 	listItems                []list.Item
@@ -67,8 +68,11 @@ func initialModel() K8mpassModel {
 	s.Spinner = spinner.Line
 	model := K8mpassModel{
 		clusterConnectionSpinner: s,
-		command:                  GetAllNamespacesOperation,
-		list:                     list.New([]list.Item{}, itemDelegate{}, 80, 15),
+		namespacePodsInfo: namespacePodsInfo{
+			podsInfo: []podInfo{},
+		},
+		command: GetAllNamespacesOperation,
+		list:    list.New([]list.Item{}, itemDelegate{}, 80, 15),
 	}
 	return model
 }
@@ -117,6 +121,10 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list = list.New(namespacesList, itemDelegate{}, 80, 15)
 		m.list.Title = "Select the namespace"
 		m.command = NameSpaceSelected
+	case podsInfoMsg:
+		m.namespacePodsInfo = msg.body
+		m.namespacePodsInfo.calculateNamespaceStatus()
+		fmt.Println(m)
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)

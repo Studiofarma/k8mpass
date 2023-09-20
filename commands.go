@@ -63,7 +63,7 @@ var GetAllPodsOperation = NamespaceOperation{
 				return errMsg(err)
 			}
 			fmt.Println(podsInfo) //just for checking it out
-			return wakeUpReviewMsg{}
+			return podsInfoMsg{}
 		}
 	},
 }

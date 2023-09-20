@@ -19,10 +19,36 @@ type kubernetesCluster struct {
 	kubernetes *kubernetes.Clientset
 }
 
+type namespacePodsInfo struct {
+	status            string
+	numberRunningPods int
+	numberErrorPods   int
+	podsInfo          []podInfo
+}
 type podInfo struct {
 	name             string
 	status           string
+	startTime        string
 	numberOfRestarts int
+}
+
+func (n namespacePodsInfo) calculateNamespaceStatus() {
+	n.numberErrorPods = 0
+	n.numberRunningPods = 0
+	n.status = "Ok"
+	for _, value := range n.podsInfo {
+		if value.status == "Running" {
+			n.numberRunningPods++
+		} else {
+			n.numberErrorPods++
+		}
+	}
+	if n.numberRunningPods < 5 {
+		n.status = "To wake up"
+	}
+	if n.numberErrorPods > 0 {
+		n.status = "Pods with error"
+	}
 }
 
 func getConnection() (*kubernetes.Clientset, error) {
@@ -91,6 +117,7 @@ func getPods(clientset *kubernetes.Clientset, namespace string) ([]podInfo, erro
 		podsInfo = append(podsInfo, podInfo{
 			name:             value.ObjectMeta.Name,
 			status:           string(value.Status.Phase),
+			startTime:        value.Status.StartTime.String(),
 			numberOfRestarts: restartCount,
 		})
 	}
