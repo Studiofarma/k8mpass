@@ -28,7 +28,7 @@ func getConnection() (*kubernetes.Clientset, error) {
 	// To add a minimim spinner time
 	sleep := make(chan string)
 	go func(c chan string) {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 		close(c)
 	}(sleep)
 

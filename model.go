@@ -9,9 +9,19 @@ type K8mpassModel struct {
 	error                    errMsg
 	cluster                  kubernetesCluster
 	clusterConnectionSpinner spinner.Model
-	isConnected              bool
 	command                  NamespaceOperation
+	namespaceModel           NamespaceSelectionModel
+	operationModel           OperationModel
+	state                    modelState
 }
+
+type modelState int32
+
+const (
+	Connection         modelState = 0
+	NamespaceSelection modelState = 1
+	OperationSelection modelState = 2
+)
 
 func initialModel() K8mpassModel {
 	s := spinner.New()
@@ -19,6 +29,7 @@ func initialModel() K8mpassModel {
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
 		command:                  WakeUpReviewOperation,
+		state:                    Connection,
 	}
 }
 
@@ -38,26 +49,28 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case clusterConnectedMsg:
-		m.isConnected = true
-		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
-		cmds = append(cmds, command)
+		m.state = NamespaceSelection
+		//m.cluster.kubernetes = msg.clientset
+		//command := m.command.Command(m, "review-devops-new-filldata")
+		//cmds = append(cmds, command)
 	}
-	if !m.isConnected {
-		s, cmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = s
-		cmds = append(cmds, cmd)
+	switch m.state {
+	case Connection:
+		sm, smCmd := m.clusterConnectionSpinner.Update(msg)
+		m.clusterConnectionSpinner = sm
+		cmds = append(cmds, smCmd)
 	}
 	return m, tea.Batch(cmds...)
 }
 
 func (m K8mpassModel) View() string {
-	s := ""
-	if !m.isConnected {
-		s += m.clusterConnectionSpinner.View()
-		s += "Connecting to the cluster..."
-	} else {
-		s += "Connection successful! Press esc to quit"
+	switch m.state {
+	case Connection:
+		return m.clusterConnectionSpinner.View() + " Connecting to Kubernetes Cluster...\n"
+	case NamespaceSelection:
+		return m.namespaceModel.View()
+	case OperationSelection:
+		return m.operationModel.View()
 	}
-	return s
+	return ""
 }
