@@ -21,9 +21,11 @@ type kubernetesCluster struct {
 
 func getConnection() (*kubernetes.Clientset, error) {
 	args := os.Args
-	var kubeConfigPath string = defaultKubeConfigFilePath()
+	var kubeConfigPath = ""
 	if len(args) > 1 {
 		kubeConfigPath = args[1]
+	} else {
+		kubeConfigPath = defaultKubeConfigFilePath()
 	}
 	// To add a minimim spinner time
 	sleep := make(chan string)
