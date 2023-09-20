@@ -152,3 +152,15 @@ func (m K8mpassModel) View() string {
 	return appStyle.Render(m.namespaces.View())
 	//return s
 }
+func setPodList() []list.Item {
+	clientSet := createClientSet(getConfig())
+	pods := getPods(clientSet, "review-hack-cgmgpharm-47203-be")
+	numPods := len(pods.Items)
+	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+
+	items := make([]list.Item, numPods)
+	for i := 0; i < numPods; i++ {
+		items[i] = item{title: pods.Items[i].Name}
+	}
+	return items
+}

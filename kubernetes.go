@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"io"
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	"os"
 	"path/filepath"
 	"time"
@@ -81,4 +85,65 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 	_, err = jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
 
 	return err
+}
+
+func getConfig() *rest.Config {
+	config, err := clientcmd.BuildConfigFromFlags("", defaultKubeConfigFilePath())
+	if err != nil {
+		panic(err.Error())
+	}
+	return config
+}
+
+func createClientSet(config *rest.Config) *kubernetes.Clientset {
+	clientSet, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil
+	}
+	return clientSet
+}
+
+func getPods(clientset *kubernetes.Clientset, nameSpace string) *v1.PodList {
+	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	return pods
+}
+
+func getNamespaces(clientset *kubernetes.Clientset) ([]string, error) {
+	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Found %d namespaces\n", len(namespaces.Items))
+	namespacesNames := make([]string, len(namespaces.Items))
+	for i := 0; i < len(namespaces.Items); i++ {
+		namespacesNames[i] = namespaces.Items[i].Name
+	}
+
+	return namespacesNames, err
+}
+func getPodLogs(nameSpace string, podName string) string {
+	podLogOpts := v1.PodLogOptions{}
+	config := getConfig()
+	// creates the clientset
+	clientset := createClientSet(config)
+
+	req := clientset.CoreV1().Pods(nameSpace).GetLogs(podName, &podLogOpts)
+	podLogs, err := req.Stream(context.TODO())
+	if err != nil {
+		return "error in opening stream"
+	}
+	defer podLogs.Close()
+
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, podLogs)
+	if err != nil {
+		return "error in copy information from podLogs to buf"
+	}
+	str := buf.String()
+
+	return str
 }

@@ -70,7 +70,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return m.NewStatusMessage(statusMessageStyle("You chose " + title))
+				return m.NewStatusMessage(statusMessageStyle("POD LOG FOR " + title + "\n" + getPodLogs("review-hack-cgmgpharm-47203-be", title)))
 
 			case key.Matches(msg, keys.remove):
 				index := m.Index()
