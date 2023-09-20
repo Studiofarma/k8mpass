@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 type K8mNamespaceModel struct {
@@ -46,6 +45,24 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
+
+		// The "up" and "k" keys move the cursor up
+		case "up", "k":
+			if m.cursor > 0 {
+				m.cursor--
+			}
+
+		// The "down" and "j" keys move the cursor down
+		case "down", "j":
+			if m.cursor < len(m.choices)-1 {
+				m.cursor++
+			}
+
+		// The "enter" key and the spacebar (a literal space) toggle
+		// the selected state for the item that the cursor is pointing at.
+		case "enter", " ":
+			m.selected = m.choices[m.cursor]
+			fmt.Println(m.selected)
 		}
 	case clusterConnectedMsg:
 		m.isConnected = true
@@ -53,16 +70,12 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		namespaces, err := m.cluster.kubernetes.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
-			fmt.Println(err)
+			m.error = err
 		}
 		for _, item := range namespaces.Items {
 			m.choices = append(m.choices, item.ObjectMeta.Name)
 		}
 
-		fmt.Println(m.choices)
-
-		//command := m.command.Command(m, "review-devops-new-filldata")
-		//cmds = append(cmds, command)
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
@@ -78,18 +91,33 @@ func (m K8mNamespaceModel) View() string {
 		s += m.clusterConnectionSpinner.View()
 		s += "Connecting to the cluster..."
 	} else {
-		s += "Connection successful! Press esc to quit"
+		s := "What should we buy at the market?\n\n"
+
+		// Iterate over our choices
+		for i, choice := range m.choices {
+
+			// Is the cursor pointing at this choice?
+			cursor := " " // no cursor
+			if m.cursor == i {
+				cursor = ">" // cursor!
+			}
+
+			// Is this choice selected?
+			checked := " " // not selected
+			if m.selected == choice {
+				checked = "x" // selected!
+			}
+
+			// Render the row
+			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		}
+
+		if m.selected != "" {
+			s += m.selected
+		}
+
+		// The footer
+		s += "\nPress q to quit.\n"
 	}
 	return s
-}
-
-func ListNameSpaces(coreClient kubernetes.Interface) []string {
-	nsList, err := coreClient.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{}) //checkErr(err)
-	fmt.Println(err)
-
-	for _, n := range nsList.Items {
-		fmt.Println(n.Name)
-	}
-
-	return []string{"a", "b"}
 }
