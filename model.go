@@ -12,6 +12,7 @@ import (
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -19,13 +20,13 @@ var (
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1)
+		Foreground(lipgloss.Color("#FFFDF5")).
+		Background(lipgloss.Color("#25A065")).
+		Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-				Render
+		Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+		Render
 )
 
 type listKeyMap struct {
@@ -94,7 +95,7 @@ func newDelegateKeyMap() *delegateKeyMap {
 	}
 }
 
-func getPodLogs(nameSpace string, podName string) string {
+func getPodLogs(nameSpace string, podName string) []list.Item {
 	podLogOpts := v1.PodLogOptions{}
 	config := getConfig()
 	// creates the clientset
@@ -103,18 +104,24 @@ func getPodLogs(nameSpace string, podName string) string {
 	req := clientset.CoreV1().Pods(nameSpace).GetLogs(podName, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
-		return "error in opening stream"
+		panic("error in opening stream")
 	}
 	defer podLogs.Close()
 
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLogs)
 	if err != nil {
-		return "error in copy information from podLogs to buf"
+		panic("error in copy information from podLogs to buf")
 	}
 	str := buf.String()
 
-	return str
+	string_split := strings.Split(str, "\n")
+	to_return := make([]list.Item, len(string_split))
+	for i := 0; i < len(string_split); i++ {
+		to_return[i] = item{title: string_split[i]}
+	}
+
+	return to_return
 }
 
 func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
@@ -133,7 +140,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return m.NewStatusMessage(statusMessageStyle("POD LOG FOR " + title + "\n" + getPodLogs("review-hack-cgmgpharm-47203-be", title)))
+				return m.SetItems(getPodLogs("review-hack-cgmgpharm-47203-be", title))
 
 			case key.Matches(msg, keys.remove):
 				index := m.Index()
@@ -170,7 +177,7 @@ func initialModel() K8mpassModel {
 
 	delegate := newItemDelegate(newDelegateKeyMap())
 	groceryList := list.New(setPodList(), delegate, 80, 15)
-	groceryList.Title = "Stocazzo"
+	groceryList.Title = "----"
 	groceryList.Styles.Title = titleStyle
 	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{
