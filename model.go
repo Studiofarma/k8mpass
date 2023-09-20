@@ -1,18 +1,23 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"strconv"
 )
 
+//var docStyle = lipgloss.NewStyle().Margin(1, 2)
+
 type K8mpassModel struct {
-	error       errMsg
-	cluster     kubernetesCluster
-	spinner     spinner.Model
-	isConnected bool
-	command     NamespaceOperation
-	namespaces  []Namespace
+	error          errMsg
+	cluster        kubernetesCluster
+	spinner        spinner.Model
+	isConnected    bool
+	command        NamespaceOperation
+	namespaces     []Namespace
+	namespacesList list.Model
 }
 
 func initialModel() K8mpassModel {
@@ -45,10 +50,25 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, fetchNamespacesCmd(m.cluster.kubernetes))
 	case fetchedNamespacesMsg:
 		m.namespaces = msg.namespaces
+		var items []list.Item
+		for i := 0; i < len(msg.namespaces); i++ {
+			items = append(items, msg.namespaces[i])
+		}
+		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 0, 0)
+		//case tea.WindowSizeMsg:
+		//	if len(m.namespacesList.Items()) > 0 {
+		//		h, v := docStyle.GetFrameSize()
+		//		m.namespacesList.SetSize(msg.Width-h, msg.Height-v)
+		//	}
 	}
 	if !m.isConnected {
 		s, cmd := m.spinner.Update(msg)
 		m.spinner = s
+		cmds = append(cmds, cmd)
+	}
+	if len(m.namespacesList.Items()) > 0 {
+		var cmd tea.Cmd
+		m.namespacesList, cmd = m.namespacesList.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
@@ -60,8 +80,9 @@ func (m K8mpassModel) View() string {
 		s += m.spinner.View()
 		s += "Connecting to the cluster..."
 	}
-	if m.isConnected && m.namespaces != nil {
-		s += "Namespaces: " + strconv.Itoa(len(m.namespaces))
+	if m.isConnected && len(m.namespacesList.Items()) > 0 {
+		s += "Namespaces: " + strconv.Itoa(len(m.namespacesList.Items())) + "\n"
+		s += lipgloss.NewStyle().Margin(1, 2).Render(m.namespacesList.View())
 	}
 
 	return s + "\n"
