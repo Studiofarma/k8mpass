@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -20,6 +21,19 @@ type NamespaceOperation struct {
 	Command K8mpassCommand
 }
 
+var GetAllNamespacesOperation = NamespaceOperation{
+	Name: "Get all namespaces",
+	Command: func(model K8mpassModel, namespace string) tea.Cmd {
+		return func() tea.Msg {
+			namespacesNames, err := getNameSpaces(model.cluster.kubernetes)
+			if err != nil {
+				return errMsg(err)
+			}
+			fmt.Println(namespacesNames) //just for checking it out
+			return wakeUpReviewMsg{}
+		}
+	},
+}
 var WakeUpReviewOperation = NamespaceOperation{
 	Name: "Wake up review app",
 	Command: func(model K8mpassModel, namespace string) tea.Cmd {

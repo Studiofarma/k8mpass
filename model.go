@@ -18,7 +18,7 @@ func initialModel() K8mpassModel {
 	s.Spinner = spinner.Line
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
-		command:                  WakeUpReviewOperation,
+		command:                  GetAllNamespacesOperation,
 	}
 }
 
@@ -40,7 +40,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
+		command := m.command.Command(m, "review-core-backend-as-aconsole")
 		cmds = append(cmds, command)
 	}
 	if !m.isConnected {
@@ -59,5 +59,6 @@ func (m K8mpassModel) View() string {
 	} else {
 		s += "Connection successful! Press esc to quit"
 	}
+	s += "\n"
 	return s
 }

@@ -59,6 +59,20 @@ func defaultKubeConfigFilePath() string {
 	return filepath.Join(userHomeDir, ".kube", "config")
 }
 
+func getNameSpaces(clientset *kubernetes.Clientset) ([]string, error) {
+	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+
+	var namespacesNames = []string{}
+	for _, value := range namespaces.Items {
+		namespacesNames = append(namespacesNames, value.ObjectMeta.Name)
+	}
+	if err != nil {
+		return []string{}, err
+	}
+
+	return namespacesNames, err
+}
+
 func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 	cronjobs := clientset.BatchV1().CronJobs(namespace)
 	cronjob, err := cronjobs.Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
