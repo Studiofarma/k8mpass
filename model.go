@@ -28,7 +28,7 @@ const (
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []NamespaceOperation{WakeUpReviewOperation}
+	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation}
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
 		command:                  WakeUpReviewOperation,

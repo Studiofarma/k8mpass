@@ -13,6 +13,7 @@ type OperationModel struct {
 	operations  list.Model
 	clientset   *kubernetes.Clientset
 	isCompleted bool
+	output      string
 	helpFooter  help.Model
 }
 
@@ -62,6 +63,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		cmds = append(cmds, omCmd)
 	case wakeUpReviewMsg:
 		o.isCompleted = true
+		o.output = msg.body
 	}
 	return o, tea.Batch(cmds...)
 }
@@ -75,10 +77,7 @@ func (o OperationModel) View() string {
 		s += o.operations.View()
 	} else {
 		s += header + " " + styledOperation + "\n\n"
-		s += gap + "Okay I'm done\n"
-		for i := 1; i <= pageHeight-4; i++ {
-			s += "\n"
-		}
+		s += o.output + "\n\n"
 		s += "  " + o.helpFooter.View(keys)
 	}
 	return s
