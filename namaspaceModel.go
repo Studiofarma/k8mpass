@@ -62,8 +62,8 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// the selected state for the item that the cursor is pointing at.
 		case "enter", " ":
 			m.selected = m.choices[m.cursor]
-			fmt.Println(m.selected)
 		}
+		//return m, nil
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
@@ -91,10 +91,10 @@ func (m K8mNamespaceModel) View() string {
 		s += m.clusterConnectionSpinner.View()
 		s += "Connecting to the cluster..."
 	} else {
-		s := "What should we buy at the market?\n\n"
+		s = "What should we buy at the market?\n\n"
 
 		// Iterate over our choices
-		for i, choice := range m.choices {
+		for i, choice := range m.choices[:10] {
 
 			// Is the cursor pointing at this choice?
 			cursor := " " // no cursor
@@ -110,10 +110,6 @@ func (m K8mNamespaceModel) View() string {
 
 			// Render the row
 			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
-		}
-
-		if m.selected != "" {
-			s += m.selected
 		}
 
 		// The footer
