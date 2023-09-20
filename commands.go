@@ -2,6 +2,7 @@ package main
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"k8s.io/client-go/kubernetes"
 )
 
 func clusterConnect() tea.Msg {
@@ -13,7 +14,7 @@ func clusterConnect() tea.Msg {
 	return clusterConnectedMsg{cs}
 }
 
-type K8mpassCommand func(model K8mpassModel, namespace string) tea.Cmd
+type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
 
 type NamespaceOperation struct {
 	Name    string
@@ -22,9 +23,9 @@ type NamespaceOperation struct {
 
 var WakeUpReviewOperation = NamespaceOperation{
 	Name: "Wake up review app",
-	Command: func(model K8mpassModel, namespace string) tea.Cmd {
+	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			err := wakeupReview(model.cluster.kubernetes, namespace)
+			err := wakeupReview(clientset, namespace)
 			if err != nil {
 				return errMsg(err)
 			}

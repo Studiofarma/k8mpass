@@ -6,8 +6,7 @@ import (
 )
 
 type NamespaceSelectionModel struct {
-	namespaces []string
-	list       list.Model
+	namespaces list.Model
 }
 
 func (n NamespaceSelectionModel) Init() tea.Cmd {
@@ -16,15 +15,15 @@ func (n NamespaceSelectionModel) Init() tea.Cmd {
 
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
-	lm, lmCmd := n.list.Update(msg)
-	n.list = lm
+	lm, lmCmd := n.namespaces.Update(msg)
+	n.namespaces = lm
 	cmds = append(cmds, lmCmd)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			i, ok := n.list.SelectedItem().(NamespaceItem)
+			i, ok := n.namespaces.SelectedItem().(NamespaceItem)
 			if ok {
 				nsCommand := func() tea.Msg {
 					return namespaceSelectedMsg{i.name}
@@ -41,5 +40,10 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 }
 
 func (n NamespaceSelectionModel) View() string {
-	return n.list.View()
+	return n.namespaces.View()
+}
+
+func (n *NamespaceSelectionModel) Reset() {
+	n.namespaces.ResetSelected()
+	n.namespaces.ResetFilter()
 }

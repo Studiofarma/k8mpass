@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type K8mpassModel struct {
@@ -27,14 +28,18 @@ const (
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
+	ops := []NamespaceOperation{WakeUpReviewOperation}
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
 		command:                  WakeUpReviewOperation,
 		state:                    Connection,
 		namespaceModel: NamespaceSelectionModel{
-			list: initializeList(),
+			namespaces: initializeList(),
 		},
-		operationModel: OperationModel{},
+		operationModel: OperationModel{
+			operations: initializeOperationList(ops),
+			helpFooter: initializeHelpFooter(),
+		},
 	}
 }
 
@@ -55,6 +60,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case clusterConnectedMsg:
 		m.cluster.kubernetes = msg.clientset
+		m.operationModel.clientset = msg.clientset
 		c := func() tea.Msg {
 			ns, err := getNamespaces(m.cluster.kubernetes)
 			if err != nil {
@@ -73,9 +79,19 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, n := range msg.namespaces {
 			items = append(items, NamespaceItem{n})
 		}
-		m.namespaceModel.list.SetItems(items)
+		m.namespaceModel.namespaces.SetItems(items)
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
+		m.operationModel.namespace = msg.namespace
+		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
+		m.operationModel.operations.NewStatusMessage(styledNamespace)
+	case backToNamespaceSelectionMsg:
+		m.state = NamespaceSelection
+		m.operationModel.Reset()
+		m.namespaceModel.Reset()
+	case backToOperationSelectionMsg:
+		m.state = OperationSelection
+		m.operationModel.Reset()
 	}
 	switch m.state {
 	case Connection:

@@ -44,18 +44,17 @@ func (n NamespaceItemDelegate) Spacing() int {
 func (n NamespaceItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
-
 func (n NamespaceItem) FilterValue() string {
 	return n.name
 }
 
 func initializeList() list.Model {
-	l := list.New([]list.Item{}, NamespaceItemDelegate{}, 50, 20)
+	l := list.New([]list.Item{}, NamespaceItemDelegate{}, pageWidth, pageHeight)
 	l.Title = "Select a namespace"
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
-	l.Styles.TitleBar = lipgloss.NewStyle()
+	l.Styles.Title = titleStyle
 	return l
 }

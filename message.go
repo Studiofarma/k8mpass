@@ -19,3 +19,6 @@ type namespacesRetrievedMsg struct {
 type namespaceSelectedMsg struct {
 	namespace string
 }
+
+type backToNamespaceSelectionMsg struct{}
+type backToOperationSelectionMsg struct{}
