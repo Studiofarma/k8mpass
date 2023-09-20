@@ -40,7 +40,11 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-core-backend-as-aconsole")
+		command := m.command.Command(m, "review-galileo-cgmgpharm-40833-fe")
+		cmds = append(cmds, command)
+	case namespacesNamesMsg:
+		//TODO generate list -> msg.body
+		command := m.command.Command(m, "review-galileo-cgmgpharm-40833-fe")
 		cmds = append(cmds, command)
 	}
 	if !m.isConnected {

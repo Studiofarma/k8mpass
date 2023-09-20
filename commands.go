@@ -29,7 +29,22 @@ var GetAllNamespacesOperation = NamespaceOperation{
 			if err != nil {
 				return errMsg(err)
 			}
-			fmt.Println(namespacesNames) //just for checking it out
+			return namespacesNamesMsg{
+				body: namespacesNames,
+			}
+		}
+	},
+}
+
+var GetAllPodsOperation = NamespaceOperation{
+	Name: "Get pods",
+	Command: func(model K8mpassModel, namespace string) tea.Cmd {
+		return func() tea.Msg {
+			podsInfo, err := getPods(model.cluster.kubernetes, namespace)
+			if err != nil {
+				return errMsg(err)
+			}
+			fmt.Println(podsInfo) //just for checking it out
 			return wakeUpReviewMsg{}
 		}
 	},

@@ -19,6 +19,12 @@ type kubernetesCluster struct {
 	kubernetes *kubernetes.Clientset
 }
 
+type podInfo struct {
+	name             string
+	status           string
+	numberOfRestarts int
+}
+
 func getConnection() (*kubernetes.Clientset, error) {
 	args := os.Args
 	var kubeConfigPath = ""
@@ -62,7 +68,7 @@ func defaultKubeConfigFilePath() string {
 func getNameSpaces(clientset *kubernetes.Clientset) ([]string, error) {
 	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 
-	var namespacesNames = []string{}
+	var namespacesNames []string
 	for _, value := range namespaces.Items {
 		namespacesNames = append(namespacesNames, value.ObjectMeta.Name)
 	}
@@ -71,6 +77,29 @@ func getNameSpaces(clientset *kubernetes.Clientset) ([]string, error) {
 	}
 
 	return namespacesNames, err
+}
+
+func getPods(clientset *kubernetes.Clientset, namespace string) ([]podInfo, error) {
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+
+	var podsInfo []podInfo
+	for _, value := range pods.Items {
+		restartCount := -1
+		if len(value.Status.ContainerStatuses) > 0 {
+			restartCount = int(value.Status.ContainerStatuses[0].RestartCount)
+		}
+		podsInfo = append(podsInfo, podInfo{
+			name:             value.ObjectMeta.Name,
+			status:           string(value.Status.Phase),
+			numberOfRestarts: restartCount,
+		})
+	}
+
+	if err != nil {
+		return []podInfo{}, err
+	}
+
+	return podsInfo, err
 }
 
 func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
