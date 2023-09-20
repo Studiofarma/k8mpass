@@ -31,18 +31,16 @@ func initialProjectModel() K8mpassModel {
 
 	return K8mpassModel{
 		state:                    mainView,
-		entry:                    nil,
 		clusterConnectionSpinner: s,
-		command:                  WakeUpReviewOperation,
 	}
 }
 
-func (m K8mpassModel) InitProjectModel() tea.Cmd {
+func (m K8mpassModel) Init() tea.Cmd {
 	return tea.EnterAltScreen
 	//return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
 }
 
-func (m K8mpassModel) UpdateProjectModel(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case errMsg:
@@ -65,7 +63,7 @@ func (m K8mpassModel) UpdateProjectModel(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m K8mpassModel) ViewProjectModel() string {
+func (m K8mpassModel) View() string {
 	switch m.state {
 	case mainView:
 		s := "Sono bello bravo e funzionante"
