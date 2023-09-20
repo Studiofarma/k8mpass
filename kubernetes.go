@@ -37,10 +37,10 @@ func (n *namespacePodsInfo) calculateNamespaceStatus() {
 	n.numberRunningPods = 0
 	n.status = "Ok"
 	for _, value := range n.podsInfo {
-		if value.status == "Running" {
-			n.numberRunningPods++
-		} else {
+		if value.status == "Pending" || value.status == "Failed" || value.status == "Evicted" {
 			n.numberErrorPods++
+		} else {
+			n.numberRunningPods++
 		}
 	}
 	if n.numberRunningPods < 5 {

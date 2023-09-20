@@ -106,13 +106,22 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		_podsInfo, _ := getPods(m.cluster.kubernetes, m.nameSpace)
 		m.namespacePodsInfo.podsInfo = _podsInfo
 		m.namespacePodsInfo.calculateNamespaceStatus()
-		operations := []list.Item{item{"op1"}, item{"op2"}}
+		operations := []list.Item{item{"Wakeup"}, item{"Pods list"}}
 		m.list = list.New(operations, itemDelegate{}, 80, 15)
 		m.list.Title = "Select the operation"
 		m.command = OperationSelected
 
 	case operationSelectedMsg:
-		fmt.Printf("%s", msg.body)
+		switch msg.body {
+		case "Wakeup":
+			m.command = WakeUpReviewOperation
+			command := m.command.Command(m, m.nameSpace)
+			cmds = append(cmds, command)
+			break
+		case "Pods list":
+			fmt.Println(m.namespacePodsInfo.podsInfo)
+			break
+		}
 
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
