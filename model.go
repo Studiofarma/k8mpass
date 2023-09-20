@@ -13,7 +13,7 @@ type K8mpassModel struct {
 	textInput                textinput.Model
 	isConnected              bool
 	inputRequired            bool
-	command                  NamespaceOperation
+	command                  []NamespaceOperation
 }
 
 func initialModel() K8mpassModel {
@@ -26,7 +26,7 @@ func initialModel() K8mpassModel {
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
 		textInput:                txt,
-		command:                  WakeUpReviewOperation,
+		command:                  []NamespaceOperation{},
 	}
 }
 
@@ -46,7 +46,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			m.inputRequired = false
-			command := m.command.Command(m, m.textInput.Value())
+			command := m.command[0].Command(m, m.textInput.Value())
 			cmds = append(cmds, command)
 		}
 
@@ -76,7 +76,7 @@ func (m K8mpassModel) View() string {
 	s := ""
 	if !m.isConnected {
 		s += m.clusterConnectionSpinner.View()
-		s += "Connecting to the cluster..."
+		s += "Connecting to the cluster..." + "\n"
 	} else {
 		if m.error != nil {
 			s += m.error.Error()
