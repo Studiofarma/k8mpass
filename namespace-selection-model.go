@@ -15,14 +15,13 @@ func (n NamespaceSelectionModel) Init() tea.Cmd {
 
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
-	lm, lmCmd := n.namespaces.Update(msg)
-	n.namespaces = lm
-	cmds = append(cmds, lmCmd)
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
+			if n.namespaces.FilterState() == list.Filtering {
+				break
+			}
 			i, ok := n.namespaces.SelectedItem().(NamespaceItem)
 			if ok {
 				nsCommand := func() tea.Msg {
@@ -35,6 +34,10 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			}
 		}
 	}
+
+	lm, lmCmd := n.namespaces.Update(msg)
+	n.namespaces = lm
+	cmds = append(cmds, lmCmd)
 
 	return n, tea.Batch(cmds...)
 }

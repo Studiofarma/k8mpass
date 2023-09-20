@@ -8,7 +8,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
 func clusterConnect() tea.Msg {
@@ -44,7 +43,6 @@ var PodsOperation = NamespaceOperation{
 	Name: "Get list of pods",
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			time.Sleep(500 * time.Millisecond)
 			p, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				return errMsg(err)

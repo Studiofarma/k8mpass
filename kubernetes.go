@@ -22,11 +22,11 @@ type kubernetesCluster struct {
 
 func getConnection() (*kubernetes.Clientset, error) {
 	args := os.Args
-	var kubeConfigPath string = defaultKubeConfigFilePath()
+	var kubeConfigPath = defaultKubeConfigFilePath()
 	if len(args) > 1 {
 		kubeConfigPath = args[1]
 	}
-	// To add a minimim spinner time
+	// To add a minimum spinner time
 	sleep := make(chan string)
 	go func(c chan string) {
 		time.Sleep(200 * time.Millisecond)
@@ -85,15 +85,9 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 }
 
 func getNamespaces(k8s *kubernetes.Clientset) (*v1.NamespaceList, error) {
-	sleep := make(chan string)
-	go func(c chan string) {
-		time.Sleep(200 * time.Millisecond)
-		close(c)
-	}(sleep)
 	nl, err := k8s.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	<-sleep
 	return nl, nil
 }
