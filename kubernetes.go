@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/google/uuid"
 	"io"
 	batchv1 "k8s.io/api/batch/v1"
@@ -111,19 +112,19 @@ func getPods(clientset *kubernetes.Clientset, nameSpace string) *v1.PodList {
 	return pods
 }
 
-func getNamespaces(clientset *kubernetes.Clientset) ([]string, error) {
+func getNamespaces(clientset *kubernetes.Clientset) []list.Item {
 	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	fmt.Printf("Found %d namespaces\n", len(namespaces.Items))
-	namespacesNames := make([]string, len(namespaces.Items))
+	namespacesNames := make([]list.Item, len(namespaces.Items))
 	for i := 0; i < len(namespaces.Items); i++ {
-		namespacesNames[i] = namespaces.Items[i].Name
+		namespacesNames[i] = item{title: namespaces.Items[i].Name}
 	}
 
-	return namespacesNames, err
+	return namespacesNames
 }
 func getPodLogs(nameSpace string, podName string) string {
 	podLogOpts := v1.PodLogOptions{}

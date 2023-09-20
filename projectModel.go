@@ -24,14 +24,25 @@ type K8mpassModel struct {
 	command                  NamespaceOperation
 }
 
-func initialProjectModel() K8mpassModel {
+func initialProjectModel(m K8mpassModel) K8mpassModel {
+	if m == nil {
+		s := spinner.New()
+		s.Spinner = spinner.Line
 
-	s := spinner.New()
-	s.Spinner = spinner.Line
-
-	return K8mpassModel{
-		state:                    mainView,
-		clusterConnectionSpinner: s,
+		return K8mpassModel{
+			state:                    mainView,
+			clusterConnectionSpinner: s,
+		}
+	} else {
+		return K8mpassModel{
+			state:                    m.state,
+			entry:                    m.entry,
+			error:                    m.error,
+			cluster:                  m.cluster,
+			clusterConnectionSpinner: m.clusterConnectionSpinner,
+			isConnected:              m.isConnected,
+			command:                  m.command,
+		}
 	}
 }
 
@@ -64,11 +75,22 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m K8mpassModel) View() string {
-	switch m.state {
-	case mainView:
-		s := "Sono bello bravo e funzionante"
-		return appStyle.Render(s)
+	s := "Sono bello bravo e funzionante"
+	if m.entry == nil {
+		n := initialNamespaceModel()
+		m.entry = n
+		return appStyle.Render(n.View())
+	} else {
+		switch m.entry.(type) {
+		case K8mpassModel:
+			//appStyle.Render(s)
+			n := initialNamespaceModel()
+			m.entry = n
+			initialProjectModel(m)
+			return appStyle.Render(n.View())
+		}
+
 	}
-	return appStyle.Render(m.View())
-	//return s
+
+	return s
 }
