@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -9,15 +10,22 @@ type K8mpassModel struct {
 	error                    errMsg
 	cluster                  kubernetesCluster
 	clusterConnectionSpinner spinner.Model
+	textInput                textinput.Model
 	isConnected              bool
+	inputRequired            bool
 	command                  NamespaceOperation
 }
 
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
+
+	txt := textinput.New()
+	txt.Placeholder = "write namespace name here"
+
 	return K8mpassModel{
 		clusterConnectionSpinner: s,
+		textInput:                txt,
 		command:                  WakeUpReviewOperation,
 	}
 }
@@ -37,11 +45,14 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 		}
+
+		m.textInput.Update(msg)
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
-		cmds = append(cmds, command)
+		m.inputRequired = true
+		//command := m.command.Command(m, "review-devops-new-filldata")
+		//cmds = append(cmds, command)
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
@@ -60,6 +71,9 @@ func (m K8mpassModel) View() string {
 		if m.error != nil {
 			s += m.error.Error()
 		} else {
+			if m.inputRequired {
+				return "namespace name:" + m.textInput.View()
+			}
 			s += "Connection successful! Press esc to quit"
 		}
 	}
