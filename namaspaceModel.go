@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,9 +18,14 @@ type K8mNamespaceModel struct {
 	isConnected              bool
 	command                  NamespaceOperation
 	error                    errMsg
+	filter                   textinput.Model
 }
 
 func initialModel() K8mNamespaceModel {
+	filter := textinput.New()
+	filter.Focus()
+	filter.Placeholder = "Search"
+
 	return K8mNamespaceModel{
 		// Our to-do list is a grocery list
 		choices: []string{},
@@ -28,6 +34,7 @@ func initialModel() K8mNamespaceModel {
 		// the  map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
 		selected: "",
+		filter:   filter,
 	}
 }
 
@@ -85,6 +92,11 @@ func (m K8mNamespaceModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.clusterConnectionSpinner = s
 		cmds = append(cmds, cmd)
 	}
+
+	filterValue, cmd := m.filter.Update(msg)
+	m.filter = filterValue
+	cmds = append(cmds, cmd)
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -94,7 +106,8 @@ func (m K8mNamespaceModel) View() string {
 		s += m.clusterConnectionSpinner.View()
 		s += "Connecting to the cluster..."
 	} else {
-		s = "What should we buy at the market?\n\n"
+		s = m.filter.View()
+		s += "What should we buy at the market?\n\n"
 
 		// Iterate over our choices
 		for i, choice := range m.choices[:10] {
