@@ -1,6 +1,9 @@
 package main
 
-import "k8s.io/client-go/kubernetes"
+import (
+	"container/list"
+	"k8s.io/client-go/kubernetes"
+)
 
 type errMsg error
 
@@ -9,6 +12,7 @@ type clusterConnectedMsg struct {
 }
 
 type fetchNamespacesMsg struct {
+	namespacesList *list.List
 }
 
 type wakeUpReviewMsg struct {

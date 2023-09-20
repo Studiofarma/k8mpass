@@ -1,10 +1,15 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+type item string
+
+func (i item) FilterValue() string { return "" }
 
 type K8mpassModel struct {
 	error                    errMsg
@@ -14,6 +19,7 @@ type K8mpassModel struct {
 	isConnected              bool
 	inputRequired            bool
 	command                  []NamespaceOperation
+	namespacesList           list.Model
 }
 
 func initialModel() K8mpassModel {
@@ -62,6 +68,14 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, func() tea.Msg {
 			return fetchNamespacesMsg{}
 		}
+	case fetchNamespacesMsg:
+		var items = []list.Item{
+			item("X"),
+			item("Y"),
+		}
+		m.namespacesList = list.New(items, list.NewDefaultDelegate(), 2, 5)
+		return m, nil
+
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
