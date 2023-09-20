@@ -23,6 +23,7 @@ type K8mpassModel struct {
 	command                  NamespaceOperation
 	list                     list.Model
 	listItems                []list.Item
+	nameSpace                string
 }
 
 type item struct {
@@ -84,10 +85,20 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc":
+		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
+			command := m.command.Command(m, m.list.SelectedItem().FilterValue())
+			cmds = append(cmds, command)
 		}
+	case nameSpaceSelectedMsg:
+		m.nameSpace = msg.body
+		operations := []list.Item{item{"op1"}, item{"op2"}}
+		m.list = list.New(operations, itemDelegate{}, 80, 15)
+		m.list.Title = "Select the operation"
+		m.command = OperationSelected
+	case operationSelectedMsg:
+		fmt.Printf("%s", msg.body)
 
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
@@ -105,6 +116,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.list = list.New(namespacesList, itemDelegate{}, 80, 15)
 		m.list.Title = "Select the namespace"
+		m.command = NameSpaceSelected
 	}
 	if !m.isConnected {
 		s, cmd := m.clusterConnectionSpinner.Update(msg)
