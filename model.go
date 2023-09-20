@@ -13,6 +13,10 @@ import (
 var (
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	titleStyle        = lipgloss.NewStyle().Margin(1).Background(lipgloss.Color("200"))
+	warningStyle      = lipgloss.NewStyle().Margin(1).Background(lipgloss.Color("202"))
+	errorStyle        = lipgloss.NewStyle().Margin(1).Background(lipgloss.Color("9"))
+	okStyle           = lipgloss.NewStyle().Margin(1).Background(lipgloss.Color("#04B575"))
 )
 
 type K8mpassModel struct {
@@ -87,6 +91,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		m.error = msg
 		return m, tea.Quit
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -95,6 +100,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			command := m.command.Command(m, m.list.SelectedItem().FilterValue())
 			cmds = append(cmds, command)
 		}
+
 	case nameSpaceSelectedMsg:
 		m.nameSpace = msg.body
 		_podsInfo, _ := getPods(m.cluster.kubernetes, m.nameSpace)
@@ -102,8 +108,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.namespacePodsInfo.calculateNamespaceStatus()
 		operations := []list.Item{item{"op1"}, item{"op2"}}
 		m.list = list.New(operations, itemDelegate{}, 80, 15)
-		m.list.Title = m.namespacePodsInfo.status + " | Select the operation"
+		m.list.Title = "Select the operation"
 		m.command = OperationSelected
+
 	case operationSelectedMsg:
 		fmt.Printf("%s", msg.body)
 
@@ -116,6 +123,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.cluster.kubernetes = msg.clientset
 		command := m.command.Command(m, "")
 		cmds = append(cmds, command)
+
 	case namespacesNamesMsg:
 		namespacesList := []list.Item{}
 		for _, val := range msg.body {
@@ -147,8 +155,29 @@ func (m K8mpassModel) View() string {
 		s += m.clusterConnectionSpinner.View()
 		s += "Connecting to the cluster..."
 	} else {
-		return docStyle.Render(m.list.View())
-		// s += "Connection successful! Press esc to quit"
+		render := docStyle.Render(m.list.View())
+
+		if m.namespacePodsInfo.status != "" {
+			info := ""
+			if m.namespacePodsInfo.status == "To wake up" {
+				info = warningStyle.Render("Status: " + m.namespacePodsInfo.status)
+			} else if m.namespacePodsInfo.status == "Pods with error" {
+				info = errorStyle.Render("Status: " + m.namespacePodsInfo.status)
+			} else if m.namespacePodsInfo.status == "Ok" {
+				info = okStyle.Render("Status: " + m.namespacePodsInfo.status)
+			}
+			render = info + "\n" + render
+		}
+
+		if m.nameSpace != "" {
+			title := "NameSpace selected: " + m.nameSpace
+
+			title = titleStyle.Render(title)
+
+			render = title + "\n" + render
+		}
+
+		return render
 	}
 	s += "\n"
 	return s
