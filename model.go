@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -30,6 +31,10 @@ func initialModel() K8mpassModel {
 		clusterConnectionSpinner: s,
 		command:                  WakeUpReviewOperation,
 		state:                    Connection,
+		namespaceModel: NamespaceSelectionModel{
+			list: initializeList(),
+		},
+		operationModel: OperationModel{},
 	}
 }
 
@@ -49,16 +54,42 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case clusterConnectedMsg:
+		m.cluster.kubernetes = msg.clientset
+		c := func() tea.Msg {
+			ns, err := getNamespaces(m.cluster.kubernetes)
+			if err != nil {
+				m.error = errMsg(err)
+			}
+			var nsNames []string
+			for _, n := range ns.Items {
+				nsNames = append(nsNames, n.Name)
+			}
+			return namespacesRetrievedMsg{nsNames}
+		}
+		cmds = append(cmds, c)
+	case namespacesRetrievedMsg:
 		m.state = NamespaceSelection
-		//m.cluster.kubernetes = msg.clientset
-		//command := m.command.Command(m, "review-devops-new-filldata")
-		//cmds = append(cmds, command)
+		var items []list.Item
+		for _, n := range msg.namespaces {
+			items = append(items, NamespaceItem{n})
+		}
+		m.namespaceModel.list.SetItems(items)
+	case namespaceSelectedMsg:
+		m.state = OperationSelection
 	}
 	switch m.state {
 	case Connection:
 		sm, smCmd := m.clusterConnectionSpinner.Update(msg)
 		m.clusterConnectionSpinner = sm
 		cmds = append(cmds, smCmd)
+	case NamespaceSelection:
+		nm, nmCmd := m.namespaceModel.Update(msg)
+		m.namespaceModel = nm
+		cmds = append(cmds, nmCmd)
+	case OperationSelection:
+		om, omCmd := m.operationModel.Update(msg)
+		m.operationModel = om
+		cmds = append(cmds, omCmd)
 	}
 	return m, tea.Batch(cmds...)
 }

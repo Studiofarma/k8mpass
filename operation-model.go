@@ -5,19 +5,21 @@ import (
 )
 
 type OperationModel struct {
+	namespace string
 }
 
 func (o OperationModel) Init() tea.Cmd {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (o OperationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	//TODO implement me
-	panic("implement me")
+func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
+	switch msg := msg.(type) {
+	case namespaceSelectedMsg:
+		o.namespace = msg.namespace
+	}
+	return o, nil
 }
 
 func (o OperationModel) View() string {
-	//TODO implement me
-	panic("implement me")
+	return "You selected the namespace" + o.namespace
 }

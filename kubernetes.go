@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path/filepath"
@@ -28,7 +29,7 @@ func getConnection() (*kubernetes.Clientset, error) {
 	// To add a minimim spinner time
 	sleep := make(chan string)
 	go func(c chan string) {
-		time.Sleep(2000 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 		close(c)
 	}(sleep)
 
@@ -81,4 +82,18 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 	_, err = jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
 
 	return err
+}
+
+func getNamespaces(k8s *kubernetes.Clientset) (*v1.NamespaceList, error) {
+	sleep := make(chan string)
+	go func(c chan string) {
+		time.Sleep(200 * time.Millisecond)
+		close(c)
+	}(sleep)
+	nl, err := k8s.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	<-sleep
+	return nl, nil
 }

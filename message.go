@@ -11,3 +11,11 @@ type clusterConnectedMsg struct {
 type wakeUpReviewMsg struct {
 	body string
 }
+
+type namespacesRetrievedMsg struct {
+	namespaces []string
+}
+
+type namespaceSelectedMsg struct {
+	namespace string
+}
