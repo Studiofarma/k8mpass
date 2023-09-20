@@ -3,28 +3,29 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
-
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"math/rand"
+	"time"
 )
 
 var (
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	titleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFDF5")).
-		Background(lipgloss.Color("#25A065")).
-		Padding(0, 1)
+			Foreground(lipgloss.Color("#FFFDF5")).
+			Background(lipgloss.Color("#25A065")).
+			Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-		Render
+				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+				Render
 )
 
 type listKeyMap struct {
@@ -155,12 +156,12 @@ func initialModel() K8mpassModel {
 
 	items := make([]list.Item, numPods)
 	for i := 0; i < numPods; i++ {
-		items[i] = item{title: pods.Items[i].Name, desc: pods.Items[i].Namespace}
-		fmt.Printf("POD NAME" + pods.Items[i].Name + "\n")
+		items[i] = item{title: pods.Items[i].Name}
+		//fmt.Printf("POD NAME" + pods.Items[i].Name + "\n")
 	}
 
 	delegate := newItemDelegate(newDelegateKeyMap())
-	groceryList := list.New(items, delegate, 0, 0)
+	groceryList := list.New(items, delegate, 80, 15)
 	groceryList.Title = "Stocazzo"
 	groceryList.Styles.Title = titleStyle
 	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
@@ -255,6 +256,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m K8mpassModel) View() string {
+	rand.Seed(time.Now().UTC().UnixNano())
 	/*s := ""
 	if !m.isConnected {
 		s += m.clusterConnectionSpinner.View()
