@@ -57,13 +57,14 @@ func defaultKubeConfigFilePath() string {
 	return filepath.Join(userHomeDir, ".kube", "config")
 }
 
-func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
-	cronjobs := clientset.BatchV1().CronJobs(namespace)
-	cronjob, err := cronjobs.Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
+func wakeupReview(client *kubernetes.Clientset, namespace string) error {
+	// dammi la definizione del cronjobDefinition
+	cronjobDefinition, err := client.BatchV1().CronJobs(namespace).Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
+	// crea il job dalla definizione
 	newUUID, err := uuid.NewUUID()
 	if err != nil {
 		return err
@@ -74,11 +75,11 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 			Name:      fmt.Sprintf("k8mpass-wakeup-%s", newUUID.String()),
 			Namespace: namespace,
 		},
-		Spec: cronjob.Spec.JobTemplate.Spec,
+		Spec: cronjobDefinition.Spec.JobTemplate.Spec,
 	}
-	jobs := clientset.BatchV1().Jobs(namespace)
 
-	_, err = jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
+	// aggiungi e runna job creato
+	_, err = client.BatchV1().Jobs(namespace).Create(context.TODO(), jobSpec, metav1.CreateOptions{})
 
 	return err
 }

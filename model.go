@@ -40,7 +40,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case clusterConnectedMsg:
 		m.isConnected = true
 		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
+		command := m.command.Command(m, "CHANGE-ME")
 		cmds = append(cmds, command)
 	}
 	if !m.isConnected {
@@ -59,5 +59,6 @@ func (m K8mpassModel) View() string {
 	} else {
 		s += "Connection successful! Press esc to quit"
 	}
+	s += "\n"
 	return s
 }
