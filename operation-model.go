@@ -43,27 +43,28 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 
 			}
 		}
-	}
+	} else
+	{
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch keypress := msg.String(); keypress {
+			case "enter":
+				i, ok := o.operations.SelectedItem().(NamespaceOperation)
+				if ok {
+					opCommand := i.Command(o.clientset, o.namespace)
+					cmds = append(cmds, opCommand)
+				} else {
+					panic("Casting went wrong")
+				}
 
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "enter":
-			i, ok := o.operations.SelectedItem().(NamespaceOperation)
-			if ok {
-				opCommand := i.Command(o.clientset, o.namespace)
-				cmds = append(cmds, opCommand)
-			} else {
-				panic("Casting went wrong")
 			}
-
+			om, omCmd := o.operations.Update(msg)
+			o.operations = om
+			cmds = append(cmds, omCmd)
+		case wakeUpReviewMsg:
+			o.isCompleted = true
+			o.output = msg.body
 		}
-		om, omCmd := o.operations.Update(msg)
-		o.operations = om
-		cmds = append(cmds, omCmd)
-	case wakeUpReviewMsg:
-		o.isCompleted = true
-		o.output = msg.body
 	}
 	return o, tea.Batch(cmds...)
 }
