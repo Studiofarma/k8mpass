@@ -17,11 +17,11 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if n.namespaces.FilterState() == list.Filtering {
+			break
+		}
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			if n.namespaces.FilterState() == list.Filtering {
-				break
-			}
 			i, ok := n.namespaces.SelectedItem().(NamespaceItem)
 			if ok {
 				nsCommand := func() tea.Msg {
@@ -32,6 +32,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			} else {
 				panic("Casting went wrong")
 			}
+
 		}
 	}
 

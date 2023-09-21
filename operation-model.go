@@ -43,11 +43,15 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 
 			}
 		}
-	} else
-	{
+	} else {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch keypress := msg.String(); keypress {
+			case "n":
+				f := func() tea.Msg {
+					return backToNamespaceSelectionMsg{}
+				}
+				cmds = append(cmds, f)
 			case "enter":
 				i, ok := o.operations.SelectedItem().(NamespaceOperation)
 				if ok {
@@ -86,4 +90,5 @@ func (o OperationModel) View() string {
 
 func (o *OperationModel) Reset() {
 	o.isCompleted = false
+	o.operations.ResetSelected()
 }

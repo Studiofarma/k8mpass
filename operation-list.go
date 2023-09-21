@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -63,5 +64,13 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	l.SetFilteringEnabled(false)
 	l.SetShowFilter(false)
 	l.Styles.Title = titleStyle
+	l.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			key.NewBinding(
+				key.WithKeys("n"),
+				key.WithHelp("n", "back to namespaces"),
+			),
+		}
+	}
 	return l
 }
