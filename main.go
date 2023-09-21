@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	_, err := p.Run()
 	if err != nil {
 		fmt.Println(err)
