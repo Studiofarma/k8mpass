@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"io"
-	"strings"
 )
 
 type OperationItem struct {
@@ -64,7 +65,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	l.SetFilteringEnabled(false)
 	l.SetShowFilter(false)
 	l.Styles.Title = titleStyle
-	l.AdditionalFullHelpKeys = func() []key.Binding {
+	additionalKeys := func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(
 				key.WithKeys("n"),
@@ -72,5 +73,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 			),
 		}
 	}
+	l.AdditionalFullHelpKeys = additionalKeys
+	l.AdditionalShortHelpKeys = additionalKeys
 	return l
 }
