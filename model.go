@@ -58,6 +58,11 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		}
+	case tea.WindowSizeMsg:
+		m.namespaceModel.namespaces.SetHeight(msg.Height)
+		m.namespaceModel.namespaces.SetWidth(msg.Width)
+		m.operationModel.operations.SetHeight(msg.Height)
+		m.operationModel.operations.SetWidth(msg.Width)
 	case clusterConnectedMsg:
 		m.cluster.kubernetes = msg.clientset
 		m.operationModel.clientset = msg.clientset
@@ -111,6 +116,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m K8mpassModel) View() string {
+	if m.error != nil {
+		return m.error.Error()
+	}
 	switch m.state {
 	case Connection:
 		return m.clusterConnectionSpinner.View() + " Connecting to Kubernetes Cluster...\n"
