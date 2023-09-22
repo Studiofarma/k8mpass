@@ -20,6 +20,8 @@ type kubernetesCluster struct {
 	kubernetes *kubernetes.Clientset
 }
 
+var K8sCluster kubernetesCluster
+
 func getConnection() (*kubernetes.Clientset, error) {
 	args := os.Args
 	var kubeConfigPath = defaultKubeConfigFilePath()

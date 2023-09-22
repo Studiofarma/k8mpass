@@ -5,13 +5,11 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"k8s.io/client-go/kubernetes"
 )
 
 type OperationModel struct {
 	namespace   string
 	operations  list.Model
-	clientset   *kubernetes.Clientset
 	isCompleted bool
 	output      string
 	helpFooter  help.Model
@@ -45,6 +43,10 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		}
 	} else {
 		switch msg := msg.(type) {
+		case namespaceSelectedMsg:
+			o.namespace = msg.namespace
+			styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
+			o.operations.NewStatusMessage(styledNamespace)
 		case tea.KeyMsg:
 			switch keypress := msg.String(); keypress {
 			case "n":
@@ -55,7 +57,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 			case "enter":
 				i, ok := o.operations.SelectedItem().(NamespaceOperation)
 				if ok {
-					opCommand := i.Command(o.clientset, o.namespace)
+					opCommand := i.Command(K8sCluster.kubernetes, o.namespace)
 					cmds = append(cmds, opCommand)
 				} else {
 					panic("Casting went wrong")
@@ -65,7 +67,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 			om, omCmd := o.operations.Update(msg)
 			o.operations = om
 			cmds = append(cmds, omCmd)
-		case wakeUpReviewMsg:
+		case operationResultMsg:
 			o.isCompleted = true
 			o.output = msg.body
 		}

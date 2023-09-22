@@ -8,9 +8,11 @@ type clusterConnectedMsg struct {
 	clientset *kubernetes.Clientset
 }
 
-type wakeUpReviewMsg struct {
+type operationResultMsg struct {
 	body string
 }
+
+type startupMsg struct{}
 
 type namespacesRetrievedMsg struct {
 	namespaces []string

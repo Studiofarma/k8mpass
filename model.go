@@ -1,26 +1,21 @@
 package main
 
 import (
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"runtime"
 )
 
 type K8mpassModel struct {
-	error                    errMsg
-	cluster                  kubernetesCluster
-	clusterConnectionSpinner spinner.Model
-	command                  NamespaceOperation
-	namespaceModel           NamespaceSelectionModel
-	operationModel           OperationModel
-	state                    modelState
+	error          errMsg
+	state          modelState
+	namespaceModel NamespaceSelectionModel
+	operationModel OperationModel
 }
 
 type modelState int32
 
 const (
-	Connection         modelState = 0
 	NamespaceSelection modelState = 1
 	OperationSelection modelState = 2
 )
@@ -28,13 +23,12 @@ const (
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation}
+	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
-		clusterConnectionSpinner: s,
-		command:                  WakeUpReviewOperation,
-		state:                    Connection,
+		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
-			namespaces: initializeList(),
+			loadingNamespaces: true,
+			namespaces:        initializeList(),
 		},
 		operationModel: OperationModel{
 			operations: initializeOperationList(ops),
@@ -44,7 +38,9 @@ func initialModel() K8mpassModel {
 }
 
 func (m K8mpassModel) Init() tea.Cmd {
-	return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
+	return tea.Batch(clusterConnect, func() tea.Msg {
+		return startupMsg{}
+	})
 }
 
 func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -59,37 +55,26 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		m.namespaceModel.namespaces.SetHeight(msg.Height)
-		m.namespaceModel.namespaces.SetWidth(msg.Width)
-		m.operationModel.operations.SetHeight(msg.Height)
-		m.operationModel.operations.SetWidth(msg.Width)
-	case clusterConnectedMsg:
-		m.cluster.kubernetes = msg.clientset
-		m.operationModel.clientset = msg.clientset
-		c := func() tea.Msg {
-			ns, err := getNamespaces(m.cluster.kubernetes)
-			if err != nil {
-				m.error = errMsg(err)
-			}
-			var nsNames []string
-			for _, n := range ns.Items {
-				nsNames = append(nsNames, n.Name)
-			}
-			return namespacesRetrievedMsg{nsNames}
+		var correction int
+		switch runtime.GOOS {
+		case "windows":
+			correction = -1 // -1 is for Windows which doesn't handle the size correctly
+		default:
+			correction = 0
 		}
+		m.namespaceModel.namespaces.SetHeight(msg.Height + correction)
+		m.namespaceModel.namespaces.SetWidth(msg.Width + correction)
+		m.operationModel.operations.SetHeight(msg.Height + correction)
+		m.operationModel.operations.SetWidth(msg.Width + correction)
+	case startupMsg:
+		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
+	case clusterConnectedMsg:
+		c := fetchNamespaces
 		cmds = append(cmds, c)
 	case namespacesRetrievedMsg:
 		m.state = NamespaceSelection
-		var items []list.Item
-		for _, n := range msg.namespaces {
-			items = append(items, NamespaceItem{n})
-		}
-		m.namespaceModel.namespaces.SetItems(items)
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
-		m.operationModel.namespace = msg.namespace
-		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
-		m.operationModel.operations.NewStatusMessage(styledNamespace)
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
@@ -99,10 +84,6 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.operationModel.Reset()
 	}
 	switch m.state {
-	case Connection:
-		sm, smCmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = sm
-		cmds = append(cmds, smCmd)
 	case NamespaceSelection:
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
@@ -120,8 +101,6 @@ func (m K8mpassModel) View() string {
 		return m.error.Error()
 	}
 	switch m.state {
-	case Connection:
-		return m.clusterConnectionSpinner.View() + " Connecting to Kubernetes Cluster...\n"
 	case NamespaceSelection:
 		return m.namespaceModel.View()
 	case OperationSelection:

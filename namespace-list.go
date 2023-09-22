@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"strings"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"io"
+	"strings"
 )
 
 type NamespaceItem struct {
@@ -50,11 +51,21 @@ func (n NamespaceItem) FilterValue() string {
 
 func initializeList() list.Model {
 	l := list.New([]list.Item{}, NamespaceItemDelegate{}, pageWidth, pageHeight)
-	l.Title = "Select a namespace"
+	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle
+	additionalKeys := func() []key.Binding {
+		return []key.Binding{
+			key.NewBinding(
+				key.WithKeys("r"),
+				key.WithHelp("r", "refresh namespaces"),
+			),
+		}
+	}
+	l.AdditionalFullHelpKeys = additionalKeys
+	l.AdditionalShortHelpKeys = additionalKeys
 	return l
 }
