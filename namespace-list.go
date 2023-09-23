@@ -57,6 +57,7 @@ func initializeList() list.Model {
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle
+	l.SetStatusBarItemName("namespace", "namespaces")
 	additionalKeys := func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(

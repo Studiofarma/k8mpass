@@ -49,7 +49,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 			o.operations.NewStatusMessage(styledNamespace)
 		case tea.KeyMsg:
 			switch keypress := msg.String(); keypress {
-			case "n":
+			case "backspace":
 				f := func() tea.Msg {
 					return backToNamespaceSelectionMsg{}
 				}
