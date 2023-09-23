@@ -11,9 +11,11 @@ type navBarState int32
 const (
 	connectingToCluster navBarState = 0
 	fetchingNamespaces  navBarState = 1
-	namespaceSelection  navBarState = 2
-	operationSelection  navBarState = 3
-	operationOutput     navBarState = 4
+
+	refreshingNamespaces navBarState = 2
+	namespaceSelection   navBarState = 3
+	operationSelection   navBarState = 4
+	operationOutput      navBarState = 5
 )
 
 type NavigationBarModel struct {
@@ -52,8 +54,15 @@ func (m NavigationBarModel) Update(msg tea.Msg) (NavigationBarModel, tea.Cmd) {
 		m.state = operationSelection
 		m.namespace = msg.namespace
 	case refreshNamespacesMsg:
+		m.state = refreshingNamespaces
 		m.loading = true
 		cmds = append(cmds, m.spinner.Tick)
+	case backToNamespaceSelectionMsg:
+		m.state = namespaceSelection
+		m.namespace = ""
+	case backToOperationSelectionMsg:
+		m.state = operationSelection
+		m.operation = ""
 	}
 	if m.loading {
 		s, sCmd := m.spinner.Update(msg)
@@ -75,6 +84,8 @@ func (m NavigationBarModel) View() string {
 		return fmt.Sprintf("%sConnecting to the cluster...\n", spinner)
 	case fetchingNamespaces:
 		return fmt.Sprintf("%sFetching namespaces\n", spinner)
+	case refreshingNamespaces:
+		return fmt.Sprintf("%sRefreshing namespaces...\n", spinner)
 	case namespaceSelection:
 		return fmt.Sprintf("%sSelect namespace\n", spinner)
 	case operationSelection:

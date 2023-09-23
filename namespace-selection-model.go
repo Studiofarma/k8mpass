@@ -47,7 +47,9 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			cmds = append(cmds, fetchNamespaces)
 			n.loadingNamespaces = true
 			n.namespaces.Title = "Refreshing namespaces..."
-			cmds = append(cmds, n.namespaces.StartSpinner())
+			cmds = append(cmds, func() tea.Msg {
+				return refreshNamespacesMsg{}
+			})
 		}
 	}
 
