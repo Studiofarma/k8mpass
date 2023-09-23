@@ -34,7 +34,7 @@ func fetchNamespaces() tea.Msg {
 	for _, n := range ns.Items {
 		nsNames = append(nsNames, n.Name)
 	}
-	return namespacesRetrievedMsg{nsNames}
+	return namespacesFetchedMsg{nsNames}
 }
 
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd

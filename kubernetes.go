@@ -31,7 +31,7 @@ func getConnection() (*kubernetes.Clientset, error) {
 	// To add a minimum spinner time
 	sleep := make(chan string)
 	go func(c chan string) {
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 		close(c)
 	}(sleep)
 
@@ -87,9 +87,16 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 }
 
 func getNamespaces(k8s *kubernetes.Clientset) (*v1.NamespaceList, error) {
+	sleep := make(chan string)
+
+	go func(c chan string) {
+		time.Sleep(500 * time.Millisecond)
+		close(c)
+	}(sleep)
 	nl, err := k8s.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
+	<-sleep
 	return nl, nil
 }

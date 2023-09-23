@@ -13,12 +13,8 @@ type keyMap struct {
 
 var keys = keyMap{
 	NamespaceSelection: key.NewBinding(
-		key.WithKeys("n"),
-		key.WithHelp("n", "back to namespaces"),
-	),
-	OperationSelection: key.NewBinding(
-		key.WithKeys("o"),
-		key.WithHelp("o", "back to operations"),
+		key.WithKeys("backspace"),
+		key.WithHelp("backspace", "back to operations"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "esc", "ctrl+c"),

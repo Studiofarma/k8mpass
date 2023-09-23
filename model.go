@@ -11,6 +11,7 @@ type K8mpassModel struct {
 	state          modelState
 	namespaceModel NamespaceSelectionModel
 	operationModel OperationModel
+	navBar         NavigationBarModel
 }
 
 type modelState int32
@@ -25,7 +26,8 @@ func initialModel() K8mpassModel {
 	s.Spinner = spinner.Line
 	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
-		state: NamespaceSelection,
+		state:  NamespaceSelection,
+		navBar: initNavBar(),
 		namespaceModel: NamespaceSelectionModel{
 			loadingNamespaces: true,
 			namespaces:        initializeList(),
@@ -48,7 +50,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case errMsg:
 		m.error = msg
-		return m, tea.Quit
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -62,16 +64,16 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			correction = 0
 		}
-		m.namespaceModel.namespaces.SetHeight(msg.Height + correction)
+		m.namespaceModel.namespaces.SetHeight(msg.Height + correction - 1)
 		m.namespaceModel.namespaces.SetWidth(msg.Width + correction)
-		m.operationModel.operations.SetHeight(msg.Height + correction)
+		m.operationModel.operations.SetHeight(msg.Height + correction - 1)
 		m.operationModel.operations.SetWidth(msg.Width + correction)
 	case startupMsg:
-		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
+		cmds = append(cmds, m.navBar.spinner.Tick)
 	case clusterConnectedMsg:
 		c := fetchNamespaces
 		cmds = append(cmds, c)
-	case namespacesRetrievedMsg:
+	case namespacesFetchedMsg:
 		m.state = NamespaceSelection
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
@@ -93,18 +95,23 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.operationModel = om
 		cmds = append(cmds, omCmd)
 	}
+	nb, nbCmd := m.navBar.Update(msg)
+	m.navBar = nb
+	cmds = append(cmds, nbCmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m K8mpassModel) View() string {
+	s := ""
 	if m.error != nil {
-		return m.error.Error()
+		return m.error.Error() + "\n"
 	}
+	s += m.navBar.View()
 	switch m.state {
 	case NamespaceSelection:
-		return m.namespaceModel.View()
+		s += m.namespaceModel.View()
 	case OperationSelection:
-		return m.operationModel.View()
+		s += m.operationModel.View()
 	}
-	return ""
+	return s
 }

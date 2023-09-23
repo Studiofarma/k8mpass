@@ -54,6 +54,7 @@ func initializeList() list.Model {
 	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)
+	l.SetShowTitle(false)
 	l.SetFilteringEnabled(true)
 	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle

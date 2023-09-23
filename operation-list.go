@@ -60,6 +60,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	}
 	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
 	l.Title = "Select an operation on"
+	l.SetShowTitle(false)
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(true)
 	l.SetFilteringEnabled(false)
@@ -68,8 +69,8 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	additionalKeys := func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(
-				key.WithKeys("n"),
-				key.WithHelp("n", "back to namespaces"),
+				key.WithKeys("backspace"),
+				key.WithHelp("backspace", "back to namespaces"),
 			),
 		}
 	}

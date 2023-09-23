@@ -14,7 +14,7 @@ type operationResultMsg struct {
 
 type startupMsg struct{}
 
-type namespacesRetrievedMsg struct {
+type namespacesFetchedMsg struct {
 	namespaces []string
 }
 
@@ -22,5 +22,11 @@ type namespaceSelectedMsg struct {
 	namespace string
 }
 
+type operationSelectedMsg struct {
+	operation string
+}
+
 type backToNamespaceSelectionMsg struct{}
 type backToOperationSelectionMsg struct{}
+
+type refreshNamespacesMsg struct{}

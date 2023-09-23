@@ -11,14 +11,14 @@ type NamespaceSelectionModel struct {
 }
 
 func (n NamespaceSelectionModel) Init() tea.Cmd {
-	return nil
+	return n.namespaces.StartSpinner()
 }
 
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 
-	case namespacesRetrievedMsg:
+	case namespacesFetchedMsg:
 		n.loadingNamespaces = false
 		n.namespaces.Title = "Select a namespace"
 		n.namespaces.StopSpinner()

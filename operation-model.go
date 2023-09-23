@@ -16,7 +16,7 @@ type OperationModel struct {
 }
 
 func (o OperationModel) Init() tea.Cmd {
-	return nil
+	return o.operations.StartSpinner()
 }
 
 func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
@@ -26,12 +26,12 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch keypress := msg.String(); keypress {
-			case "n":
-				f := func() tea.Msg {
-					return backToNamespaceSelectionMsg{}
-				}
-				cmds = append(cmds, f)
-			case "o":
+			/*			case "n":
+						f := func() tea.Msg {
+							return backToNamespaceSelectionMsg{}
+						}
+						cmds = append(cmds, f)*/
+			case "backspace":
 				f := func() tea.Msg {
 					return backToOperationSelectionMsg{}
 				}
@@ -49,7 +49,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 			o.operations.NewStatusMessage(styledNamespace)
 		case tea.KeyMsg:
 			switch keypress := msg.String(); keypress {
-			case "n":
+			case "backspace":
 				f := func() tea.Msg {
 					return backToNamespaceSelectionMsg{}
 				}
@@ -58,7 +58,10 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 				i, ok := o.operations.SelectedItem().(NamespaceOperation)
 				if ok {
 					opCommand := i.Command(K8sCluster.kubernetes, o.namespace)
-					cmds = append(cmds, opCommand)
+					f := func() tea.Msg {
+						return operationSelectedMsg{operation: i.Name}
+					}
+					cmds = append(cmds, opCommand, f)
 				} else {
 					panic("Casting went wrong")
 				}
@@ -76,14 +79,13 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 }
 
 func (o OperationModel) View() string {
-	gap := "  "
+	/*gap := "  "
 	header := gap + titleStyle.Render("Output of operation")
 	styledOperation := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(o.operations.SelectedItem().FilterValue())
-	s := ""
+	*/s := ""
 	if !o.isCompleted {
 		s += o.operations.View()
 	} else {
-		s += header + " " + styledOperation + "\n\n"
 		s += o.output + "\n\n"
 		s += "  " + o.helpFooter.View(keys)
 	}
