@@ -22,56 +22,34 @@ func (o OperationModel) Init() tea.Cmd {
 func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 	var cmds []tea.Cmd
 
-	if o.isCompleted {
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch keypress := msg.String(); keypress {
-			case "n":
-				f := func() tea.Msg {
-					return backToNamespaceSelectionMsg{}
-				}
-				cmds = append(cmds, f)
-			case "o":
-				f := func() tea.Msg {
-					return backToOperationSelectionMsg{}
-				}
-				cmds = append(cmds, f)
-			case "q":
-				return o, tea.Quit
-
+	switch msg := msg.(type) {
+	case namespaceSelectedMsg:
+		o.namespace = msg.namespace
+		//		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
+		//		o.operations.NewStatusMessage(styledNamespace)
+	case operationResultMsg:
+		o.isCompleted = true
+		o.output = msg.body
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "backspace":
+			f := func() tea.Msg {
+				return backToNamespaceSelectionMsg{}
 			}
-		}
-	} else {
-		switch msg := msg.(type) {
-		case namespaceSelectedMsg:
-			o.namespace = msg.namespace
-			styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
-			o.operations.NewStatusMessage(styledNamespace)
-		case tea.KeyMsg:
-			switch keypress := msg.String(); keypress {
-			case "backspace":
-				f := func() tea.Msg {
-					return backToNamespaceSelectionMsg{}
-				}
-				cmds = append(cmds, f)
-			case "enter":
-				i, ok := o.operations.SelectedItem().(NamespaceOperation)
-				if ok {
-					opCommand := i.Command(K8sCluster.kubernetes, o.namespace)
-					cmds = append(cmds, opCommand)
-				} else {
-					panic("Casting went wrong")
-				}
-
+			cmds = append(cmds, f)
+		case "enter":
+			i, ok := o.operations.SelectedItem().(NamespaceOperation)
+			if ok {
+				opCommand := i.Command(K8sCluster.kubernetes, o.namespace)
+				cmds = append(cmds, opCommand)
+			} else {
+				panic("Casting went wrong")
 			}
-			om, omCmd := o.operations.Update(msg)
-			o.operations = om
-			cmds = append(cmds, omCmd)
-		case operationResultMsg:
-			o.isCompleted = true
-			o.output = msg.body
 		}
 	}
+	om, omCmd := o.operations.Update(msg)
+	o.operations = om
+	cmds = append(cmds, omCmd)
 	return o, tea.Batch(cmds...)
 }
 

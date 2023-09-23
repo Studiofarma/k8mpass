@@ -68,6 +68,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.operationModel.operations.SetWidth(msg.Width + correction)
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
+	case noOutputResultMsg:
+		cmd := m.operationModel.operations.NewStatusMessage(msg.message)
+		cmds = append(cmds, cmd)
 	case clusterConnectedMsg:
 		c := fetchNamespaces
 		cmds = append(cmds, c)

@@ -12,6 +12,10 @@ type operationResultMsg struct {
 	body string
 }
 
+type noOutputResultMsg struct {
+	message string
+}
+
 type startupMsg struct{}
 
 type namespacesRetrievedMsg struct {

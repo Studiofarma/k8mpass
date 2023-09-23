@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -65,6 +66,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	l.SetFilteringEnabled(false)
 	l.SetShowFilter(false)
 	l.Styles.Title = titleStyle
+	l.StatusMessageLifetime = time.Second * 3
 	additionalKeys := func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(
