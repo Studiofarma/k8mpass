@@ -48,11 +48,10 @@ var WakeUpReviewOperation = NamespaceOperation{
 	Name: "Wake up review app",
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			/*
-				err := wakeupReview(clientset, namespace)
-				if err != nil {
-					return errMsg(err)
-				}*/
+			err := wakeupReview(clientset, namespace)
+			if err != nil {
+				return errMsg(err)
+			}
 			return noOutputResultMsg{"  We woke it up!"}
 		}
 	},
