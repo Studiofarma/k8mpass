@@ -1,6 +1,8 @@
 package main
 
-import "k8s.io/client-go/kubernetes"
+import (
+	"k8s.io/client-go/kubernetes"
+)
 
 type errMsg error
 
@@ -13,13 +15,14 @@ type operationResultMsg struct {
 }
 
 type noOutputResultMsg struct {
+	success bool
 	message string
 }
 
 type startupMsg struct{}
 
 type namespacesRetrievedMsg struct {
-	namespaces []string
+	namespaces []NamespaceItem
 }
 
 type namespaceSelectedMsg struct {

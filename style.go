@@ -12,4 +12,8 @@ var (
 		Background(lipgloss.Color("62")).
 		Bold(true).
 		Padding(0, 1)
+	statusMessageGreen = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#66ffc2"))
+	statusMessageRed = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#ff6666"))
 )

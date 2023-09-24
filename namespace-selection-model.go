@@ -24,7 +24,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		n.namespaces.StopSpinner()
 		var items []list.Item
 		for _, n := range msg.namespaces {
-			items = append(items, NamespaceItem{n})
+			items = append(items, n)
 		}
 		n.namespaces.SetItems(items)
 	case tea.KeyMsg:
@@ -36,7 +36,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			i, ok := n.namespaces.SelectedItem().(NamespaceItem)
 			if ok {
 				nsCommand := func() tea.Msg {
-					return namespaceSelectedMsg{i.name}
+					return namespaceSelectedMsg{i.Name}
 				}
 				cmds = append(cmds, nsCommand)
 

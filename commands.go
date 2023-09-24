@@ -30,11 +30,11 @@ func fetchNamespaces() tea.Msg {
 	if err != nil {
 		return errMsg(err)
 	}
-	var nsNames []string
+	var items []NamespaceItem
 	for _, n := range ns.Items {
-		nsNames = append(nsNames, n.Name)
+		items = append(items, NamespaceItem(n))
 	}
-	return namespacesRetrievedMsg{nsNames}
+	return namespacesRetrievedMsg{items}
 }
 
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
@@ -50,9 +50,9 @@ var WakeUpReviewOperation = NamespaceOperation{
 		return func() tea.Msg {
 			err := wakeupReview(clientset, namespace)
 			if err != nil {
-				return errMsg(err)
+				return noOutputResultMsg{false, err.Error()}
 			}
-			return noOutputResultMsg{"  We woke it up!"}
+			return noOutputResultMsg{true, "We woke it up!"}
 		}
 	},
 }
@@ -82,11 +82,10 @@ var OpenDbmsOperation = NamespaceOperation{
 	Name: "Open DBMS in browser",
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			time.Sleep(200 * time.Millisecond)
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 
 			if err != nil {
-				return errMsg(err)
+				return noOutputResultMsg{false, err.Error()}
 			}
 
 			var dbmsUrl string
@@ -97,10 +96,15 @@ var OpenDbmsOperation = NamespaceOperation{
 					dbmsUrl = host
 				}
 			}
-
+			if dbmsUrl == "" {
+				return noOutputResultMsg{false, "Ingress not found"}
+			}
 			Openbrowser("https://" + dbmsUrl)
 
-			return operationResultMsg{body: "DBeaver is better 🦦"}
+			return noOutputResultMsg{
+				true,
+				"DBeaver is better 🦦",
+			}
 		}
 	},
 }
@@ -109,11 +113,10 @@ var OpenApplicationOperation = NamespaceOperation{
 	Name: "Open application in browser",
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
-			time.Sleep(200 * time.Millisecond)
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 
 			if err != nil {
-				return errMsg(err)
+				return noOutputResultMsg{false, err.Error()}
 			}
 
 			var dbmsUrl string
@@ -123,10 +126,12 @@ var OpenApplicationOperation = NamespaceOperation{
 					dbmsUrl = i.Spec.Rules[0].Host
 				}
 			}
-
+			if dbmsUrl == "" {
+				return noOutputResultMsg{false, "Ingress not found"}
+			}
 			Openbrowser("https://" + dbmsUrl)
 
-			return operationResultMsg{body: "App is ready. Who is Bruno Marotta?"}
+			return noOutputResultMsg{true, "App is ready. Who is Bruno Marotta?"}
 		}
 	},
 }

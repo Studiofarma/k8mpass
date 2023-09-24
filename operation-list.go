@@ -71,10 +71,18 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 		return []key.Binding{
 			key.NewBinding(
 				key.WithKeys("backspace"),
-				key.WithHelp("backspace", "back to namespaces"),
+				key.WithHelp("⌫", "back"),
 			),
 		}
 	}
+	l.KeyMap.GoToEnd.Unbind()
+	l.KeyMap.GoToStart.Unbind()
+	l.KeyMap.ShowFullHelp.Unbind()
+	l.KeyMap.CloseFullHelp.Unbind()
+	l.KeyMap.CursorUp.SetHelp("↑", "up")
+	l.KeyMap.CursorDown.SetHelp("↓", "down")
+	l.KeyMap.NextPage.SetHelp("→", "right")
+	l.KeyMap.PrevPage.SetHelp("←", "left")
 	l.AdditionalFullHelpKeys = additionalKeys
 	l.AdditionalShortHelpKeys = additionalKeys
 	return l

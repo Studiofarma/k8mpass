@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/charmbracelet/bubbletea v0.24.2
+	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/google/uuid v1.3.0
 	k8s.io/api v0.28.1
 	k8s.io/apimachinery v0.28.1
@@ -11,7 +12,6 @@ require (
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/charmbracelet/lipgloss v0.7.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect

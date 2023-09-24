@@ -25,8 +25,17 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case namespaceSelectedMsg:
 		o.namespace = msg.namespace
-		//		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
-		//		o.operations.NewStatusMessage(styledNamespace)
+	//		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
+	//		o.operations.NewStatusMessage(styledNamespace)
+	case noOutputResultMsg:
+		var style lipgloss.Style
+		if msg.success {
+			style = statusMessageGreen
+		} else {
+			style = statusMessageRed
+		}
+		cmd := o.operations.NewStatusMessage(style.Render(msg.message))
+		cmds = append(cmds, cmd)
 	case operationResultMsg:
 		o.isCompleted = true
 		o.output = msg.body
