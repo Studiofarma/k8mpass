@@ -23,7 +23,7 @@ const (
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
+	ops := []NamespaceOperation{CheckSleepingStatusOperation, WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
@@ -68,9 +68,6 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.operationModel.operations.SetWidth(msg.Width + correction)
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
-		//	case noOutputResultMsg:
-		//		cmd := m.operationModel.operations.NewStatusMessage(msg.message)
-		//		cmds = append(cmds, cmd)
 	case clusterConnectedMsg:
 		c := fetchNamespaces
 		cmds = append(cmds, c)

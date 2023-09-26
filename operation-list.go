@@ -60,7 +60,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 		items = append(items, op)
 	}
 	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
-	l.Title = "Select an operation on"
+	//l.Title = "Select an operation on"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(true)
 	l.SetFilteringEnabled(false)
