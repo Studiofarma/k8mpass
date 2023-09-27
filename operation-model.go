@@ -45,9 +45,16 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		case "t":
 			cmds = append(cmds, checkIfReviewAppIsAsleep(o.namespace))
 		case "backspace":
+			var f func() tea.Msg
 			o.operations.NewStatusMessage("")
-			f := func() tea.Msg {
-				return backToNamespaceSelectionMsg{}
+			if !o.isCompleted {
+				f = func() tea.Msg {
+					return backToNamespaceSelectionMsg{}
+				}
+			} else {
+				f = func() tea.Msg {
+					return backToOperationSelectionMsg{}
+				}
 			}
 			cmds = append(cmds, f)
 		case "enter":

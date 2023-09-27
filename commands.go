@@ -34,22 +34,37 @@ func fetchNamespaces() tea.Msg {
 		return errMsg(err)
 	}
 	var items []NamespaceItem
+	sleepingInfo, err := getReviewAppsSleepingStatus()
+	if err != nil {
+		return errMsg(err)
+	}
 	for _, n := range ns.Items {
-		items = append(items, NamespaceItem(n))
+		var isSleeping = true
+		for _, ra := range sleepingInfo {
+			if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
+				isSleeping = ra.IsAsleep()
+			}
+		}
+		items = append(items, NamespaceItem{n, isSleeping})
 	}
 	return namespacesRetrievedMsg{items}
 }
 
 type ThanosResponse struct {
-	Data ThanosData
+	Data ThanosData `json:"data"`
 }
 
 type ThanosData struct {
-	Result []ThanosResult
+	Result []ThanosResult `json:"result"`
+}
+
+type ThanosMetric struct {
+	ExportedService string `json:"exported_service"`
 }
 
 type ThanosResult struct {
-	Value []interface{}
+	Metric ThanosMetric  `json:"metric"`
+	Value  []interface{} `json:"value"`
 }
 
 func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
@@ -77,11 +92,36 @@ func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
 	}
 }
 
+func getReviewAppsSleepingStatus() ([]ThanosResult, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
+	if err != nil {
+		return nil, err
+	}
+	q := req.URL.Query()
+	query := os.Getenv("THANOS_QUERY_ALL_NS")
+	q.Add("query", query)
+	req.URL.RawQuery = q.Encode()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var thResponse ThanosResponse
+	err = json.NewDecoder(resp.Body).Decode(&thResponse)
+	return thResponse.Data.Result, nil
+}
+
 func (r ThanosResponse) IsAsleep() bool {
 	if len(r.Data.Result) == 0 {
 		return true
 	}
 	if r.Data.Result[0].Value[1] == "" || r.Data.Result[0].Value[1] == "0" {
+		return true
+	}
+	return false
+}
+func (r ThanosResult) IsAsleep() bool {
+	if r.Value[1] == "" || r.Value[1] == "0" {
 		return true
 	}
 	return false

@@ -2,6 +2,8 @@ module github.com/studiofarma/k8mpass
 
 go 1.21
 
+replace github.com/charmbracelet/bubbles v0.16.1 => github.com/taigrr/bubbles v0.10.11
+
 require (
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1

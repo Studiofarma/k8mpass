@@ -11,8 +11,10 @@ import (
 	"strings"
 )
 
-type NamespaceItem v1.Namespace
-
+type NamespaceItem struct {
+	k8sNamespace v1.Namespace
+	isAsleep     bool
+}
 type NamespaceItemDelegate struct{}
 
 func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -21,7 +23,7 @@ func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, list
 		return
 	}
 
-	str := i.Name
+	str := i.k8sNamespace.Name
 
 	fn := lipgloss.NewStyle().PaddingLeft(4).Render
 	if index == m.Index() {
@@ -29,23 +31,28 @@ func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, list
 			return lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170")).Render("> " + strings.Join(s, " "))
 		}
 	}
-
 	fmt.Fprint(w, fn(str))
+	fmt.Fprint(w, "\n")
+	if i.isAsleep {
+		fmt.Fprint(w, lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("#7d7d7d")).Render("Sleeping..."))
+	} else {
+		fmt.Fprint(w, lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("#7d7d7d")).Render("Wide awake!"))
+	}
 }
 
 func (n NamespaceItemDelegate) Height() int {
-	return 1
+	return 2
 }
 
 func (n NamespaceItemDelegate) Spacing() int {
-	return 0
+	return 1
 }
 
 func (n NamespaceItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 func (n NamespaceItem) FilterValue() string {
-	return n.Name
+	return n.k8sNamespace.Name
 }
 
 func initializeList() list.Model {
