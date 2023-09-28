@@ -6,8 +6,7 @@ import (
 )
 
 type NamespaceSelectionModel struct {
-	loadingNamespaces bool
-	namespaces        list.Model
+	namespaces list.Model
 }
 
 func (n NamespaceSelectionModel) Init() tea.Cmd {
@@ -17,9 +16,7 @@ func (n NamespaceSelectionModel) Init() tea.Cmd {
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-
 	case namespacesRetrievedMsg:
-		n.loadingNamespaces = false
 		n.namespaces.Title = "Select a namespace"
 		n.namespaces.StopSpinner()
 		var items []list.Item
@@ -45,7 +42,6 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			}
 		case "r":
 			cmds = append(cmds, fetchNamespaces)
-			n.loadingNamespaces = true
 			n.namespaces.Title = "Refreshing namespaces..."
 			cmds = append(cmds, n.namespaces.StartSpinner())
 		}
