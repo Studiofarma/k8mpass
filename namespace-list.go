@@ -13,8 +13,13 @@ import (
 
 type NamespaceItem struct {
 	k8sNamespace v1.Namespace
-	isAsleep     bool
+	isAwake      bool
 }
+
+func (n NamespaceItem) IsReviewApp() bool {
+	return strings.HasPrefix(n.k8sNamespace.Name, "review")
+}
+
 type NamespaceItemDelegate struct{}
 
 func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -32,20 +37,22 @@ func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, list
 		}
 	}
 	fmt.Fprint(w, fn(str))
-	fmt.Fprint(w, "\n")
-	if i.isAsleep {
-		fmt.Fprint(w, lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("#7d7d7d")).Render("Sleeping..."))
-	} else {
+	//fmt.Fprint(w, "\n")
+	if !i.IsReviewApp() {
+		// do nothing
+	} else if i.isAwake {
 		fmt.Fprint(w, lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("#7d7d7d")).Render("Wide awake!"))
+	} else {
+		fmt.Fprint(w, lipgloss.NewStyle().PaddingLeft(4).Foreground(lipgloss.Color("#7d7d7d")).Render("Sleeping..."))
 	}
 }
 
 func (n NamespaceItemDelegate) Height() int {
-	return 2
+	return 1
 }
 
 func (n NamespaceItemDelegate) Spacing() int {
-	return 1
+	return 0
 }
 
 func (n NamespaceItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {

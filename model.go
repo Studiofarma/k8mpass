@@ -78,7 +78,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
-		m.namespaceModel.Reset()
+		//m.namespaceModel.Reset()
 	case backToOperationSelectionMsg:
 		m.state = OperationSelection
 		m.operationModel.Reset()

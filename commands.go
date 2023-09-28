@@ -39,13 +39,13 @@ func fetchNamespaces() tea.Msg {
 		return errMsg(err)
 	}
 	for _, n := range ns.Items {
-		var isSleeping = true
+		var isAwake = false
 		for _, ra := range sleepingInfo {
 			if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
-				isSleeping = ra.IsAsleep()
+				isAwake = ra.IsAwake() || isAwake
 			}
 		}
-		items = append(items, NamespaceItem{n, isSleeping})
+		items = append(items, NamespaceItem{n, isAwake})
 	}
 	return namespacesRetrievedMsg{items}
 }
@@ -120,11 +120,11 @@ func (r ThanosResponse) IsAsleep() bool {
 	}
 	return false
 }
-func (r ThanosResult) IsAsleep() bool {
+func (r ThanosResult) IsAwake() bool {
 	if r.Value[1] == "" || r.Value[1] == "0" {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd

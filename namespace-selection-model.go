@@ -26,7 +26,8 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		for _, n := range msg.namespaces {
 			items = append(items, n)
 		}
-		n.namespaces.SetItems(items)
+		cmd := n.namespaces.SetItems(items)
+		cmds = append(cmds, cmd)
 		//n.namespaces.SetFilterState(list.Filtering)
 	case tea.KeyMsg:
 		if n.namespaces.FilterState() == list.Filtering {
