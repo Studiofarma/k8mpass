@@ -11,7 +11,7 @@ import (
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		panic(err)
+
 	}
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	_, err = p.Run()

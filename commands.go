@@ -35,14 +35,13 @@ func fetchNamespaces() tea.Msg {
 	}
 	var items []NamespaceItem
 	sleepingInfo, err := getReviewAppsSleepingStatus()
-	if err != nil {
-		return errMsg(err)
-	}
 	for _, n := range ns.Items {
 		var isAwake = false
-		for _, ra := range sleepingInfo {
-			if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
-				isAwake = ra.IsAwake() || isAwake
+		if err != nil {
+			for _, ra := range sleepingInfo {
+				if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
+					isAwake = ra.IsAwake() || isAwake
+				}
 			}
 		}
 		items = append(items, NamespaceItem{n, isAwake})
