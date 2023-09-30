@@ -12,6 +12,22 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var (
+	pageHeight = 20
+	pageWidth  = 80
+)
+
+var (
+	titleStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("62")).
+			Bold(true).
+			Padding(0, 1)
+	statusMessageGreen = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#66ffc2"))
+	statusMessageRed = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#ff6666"))
+)
+
 type OperationItem struct {
 	name string
 }
@@ -59,7 +75,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	for _, op := range ops {
 		items = append(items, op)
 	}
-	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
+	l := list.New(items, OperationItemDelegate{}, 80, 20)
 	//l.Title = "Select an operation on"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(true)

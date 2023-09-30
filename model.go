@@ -1,9 +1,11 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"runtime"
+	"github.com/studiofarma/k8mpass/namespace"
 )
 
 type K8mpassModel struct {
@@ -27,7 +29,7 @@ func initialModel() K8mpassModel {
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
-			namespaces: initializeList(),
+			namespaces: namespace.New(),
 		},
 		operationModel: OperationModel{
 			operations: initializeOperationList(ops),
@@ -68,21 +70,31 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
 	case clusterConnectedMsg:
-		cmds = append(cmds, fetchNamespaces)
-	case namespacesRetrievedMsg:
-		m.state = NamespaceSelection
+		cmds = append(cmds, watchNamespaces(K8sCluster.kubernetes))
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
-		//m.namespaceModel.Reset()
 	case backToOperationSelectionMsg:
 		m.state = OperationSelection
 		m.operationModel.Reset()
+	case nextEventMsg:
+		cmds = append(cmds, nextEvent(m.namespaceModel.nsChannel))
 	}
+	// Model specific messages
+	switch msg.(type) {
+	case namespace.NamespaceMessage:
+		nm, nmCmd := m.namespaceModel.Update(msg)
+		m.namespaceModel = nm
+		cmds = append(cmds, nmCmd)
+	}
+
 	switch m.state {
 	case NamespaceSelection:
+		if _, ok := msg.(namespace.NamespaceMessage); ok {
+			break
+		}
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
 		cmds = append(cmds, nmCmd)

@@ -4,18 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
-	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/studiofarma/k8mpass/namespace"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes"
 )
 
 func clusterConnect() tea.Msg {
@@ -27,26 +29,60 @@ func clusterConnect() tea.Msg {
 	return clusterConnectedMsg{cs}
 }
 
-func fetchNamespaces() tea.Msg {
-	time.Sleep(500 * time.Millisecond)
-	ns, err := getNamespaces(K8sCluster.kubernetes)
-	if err != nil {
-		return errMsg(err)
-	}
-	var items []NamespaceItem
-	sleepingInfo, err := getReviewAppsSleepingStatus()
-	for _, n := range ns.Items {
-		var isAwake = false
+// func fetchNamespaces() tea.Msg {
+// 	time.Sleep(500 * time.Millisecond)
+// 	ns, err := getNamespaces(K8sCluster.kubernetes)
+// 	if err != nil {
+// 		return errMsg(err)
+// 	}
+// 	var items []namespace.NamespaceItem
+// 	sleepingInfo, err := getReviewAppsSleepingStatus()
+// 	for _, n := range ns.Items {
+// 		var isAwake = false
+// 		if err != nil {
+// 			for _, ra := range sleepingInfo {
+// 				if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
+// 					isAwake = ra.IsAwake() || isAwake
+// 				}
+// 			}
+// 		}
+// 		items = append(items, namespace.NamespaceItem{n, isAwake})
+// 	}
+// 	return namespacesRetrievedMsg{items}
+// }
+
+func watchNamespaces(cs *kubernetes.Clientset) tea.Cmd {
+	return func() tea.Msg {
+		opt := metav1.ListOptions{
+			//		TimeoutSeconds: &timeout,
+		}
+		watcher, err := cs.CoreV1().Namespaces().Watch(context.TODO(), opt)
 		if err != nil {
-			for _, ra := range sleepingInfo {
-				if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
-					isAwake = ra.IsAwake() || isAwake
+			panic(err)
+		}
+		return watchNamespaceMsg{watcher.ResultChan()}
+	}
+}
+
+func nextEvent(ch <-chan watch.Event) tea.Cmd {
+	return tea.Batch(
+		func() tea.Msg {
+			event := <-ch
+			item := event.Object.(*v1.Namespace)
+			switch event.Type {
+			case watch.Deleted:
+				return namespace.RemovedNamespaceMsg{
+					namespace.NamespaceItem{*item, false},
+				}
+			case watch.Added:
+				return namespace.AddedNamespaceMsg{
+					namespace.NamespaceItem{*item, false},
 				}
 			}
-		}
-		items = append(items, NamespaceItem{n, isAwake})
-	}
-	return namespacesRetrievedMsg{items}
+			return nil
+		},
+		func() tea.Msg { return nextEventMsg{} },
+	)
 }
 
 type ThanosResponse struct {

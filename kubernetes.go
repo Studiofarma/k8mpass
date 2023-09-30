@@ -37,7 +37,6 @@ func getConnection() (*kubernetes.Clientset, error) {
 
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		fmt.Printf("Error getting kubernetes config: %v\n", err)
 		return nil, err
 	}
 	<-sleep

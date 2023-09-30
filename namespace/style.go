@@ -1,4 +1,4 @@
-package main
+package namespace
 
 import "github.com/charmbracelet/lipgloss"
 
@@ -9,11 +9,11 @@ var (
 
 var (
 	titleStyle = lipgloss.NewStyle().
-		Background(lipgloss.Color("62")).
-		Bold(true).
-		Padding(0, 1)
+			Background(lipgloss.Color("62")).
+			Bold(true).
+			Padding(0, 1)
 	statusMessageGreen = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#66ffc2"))
+				Foreground(lipgloss.Color("#66ffc2"))
 	statusMessageRed = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ff6666"))
+				Foreground(lipgloss.Color("#ff6666"))
 )
