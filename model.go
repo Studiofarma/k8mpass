@@ -30,6 +30,7 @@ func initialModel() K8mpassModel {
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces: namespace.New(),
+			properties: []namespace.NamespaceCustomProperty{namespace.NamespaceAgeProperty},
 		},
 		operationModel: OperationModel{
 			operations: initializeOperationList(ops),

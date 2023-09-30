@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/charmbracelet/bubbletea v0.24.2
-	github.com/charmbracelet/lipgloss v0.7.1
+	github.com/charmbracelet/lipgloss v0.8.0
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	k8s.io/api v0.28.1
@@ -33,6 +33,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/sahilm/fuzzy v0.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
@@ -60,7 +61,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20211018074035-2e021307bc4b // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/muesli/termenv v0.15.1 // indirect
+	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect

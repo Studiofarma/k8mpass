@@ -12,6 +12,7 @@ import (
 type NamespaceSelectionModel struct {
 	namespaces list.Model
 	nsChannel  <-chan watch.Event
+	properties []namespace.NamespaceCustomProperty
 }
 
 func (n NamespaceSelectionModel) Init() tea.Cmd {
@@ -32,7 +33,14 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
-		cmds = append(cmds, n.namespaces.SetItems(ns))
+		var withProperties []list.Item
+		for _, i := range ns {
+			cast, _ := i.(namespace.NamespaceItem)
+			cast.LoadCustomProperties(n.properties...)
+			withProperties = append(withProperties, cast)
+
+		}
+		cmds = append(cmds, n.namespaces.SetItems(withProperties))
 	case namespace.RemovedNamespaceMsg:
 		var idx = -1
 		for i, v := range n.namespaces.Items() {

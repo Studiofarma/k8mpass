@@ -56,10 +56,11 @@ func watchNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 		opt := metav1.ListOptions{
 			//		TimeoutSeconds: &timeout,
 		}
-		watcher, err := cs.CoreV1().Namespaces().Watch(context.TODO(), opt)
+		watcher, err := cs.CoreV1().Namespaces().Watch(context.Background(), opt)
 		if err != nil {
 			panic(err)
 		}
+		log.Println("Watching namespaces")
 		return watchNamespaceMsg{watcher.ResultChan()}
 	}
 }
@@ -72,11 +73,11 @@ func nextEvent(ch <-chan watch.Event) tea.Cmd {
 			switch event.Type {
 			case watch.Deleted:
 				return namespace.RemovedNamespaceMsg{
-					namespace.NamespaceItem{*item, false},
+					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false},
 				}
 			case watch.Added:
 				return namespace.AddedNamespaceMsg{
-					namespace.NamespaceItem{*item, false},
+					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false, CustomProperties: make(map[string]string)},
 				}
 			}
 			return nil

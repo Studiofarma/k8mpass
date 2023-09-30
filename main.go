@@ -2,16 +2,23 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/joho/godotenv"
-
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	godotenv.Load(".env")
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	if err := godotenv.Load(".env"); err != nil {
+		log.Println("Failed to load .env")
+	} else {
+		log.Println("Loaded .env correctly")
+	}
+	p := tea.NewProgram(
+		initialModel(),
+		tea.WithAltScreen(),
+	)
 	_, err := p.Run()
 	if err != nil {
 		fmt.Println(err)
