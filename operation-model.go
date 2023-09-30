@@ -25,6 +25,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case namespaceSelectedMsg:
 		o.namespace = msg.namespace
+		o.operations.Title = msg.namespace
 	//		styledNamespace := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("170")).Render(msg.namespace)
 	//		o.operations.NewStatusMessage(styledNamespace)
 	case noOutputResultMsg:
@@ -41,9 +42,19 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		o.output = msg.body
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
+		case "t":
+			cmds = append(cmds, checkIfReviewAppIsAsleep(o.namespace))
 		case "backspace":
-			f := func() tea.Msg {
-				return backToNamespaceSelectionMsg{}
+			var f func() tea.Msg
+			o.operations.NewStatusMessage("")
+			if !o.isCompleted {
+				f = func() tea.Msg {
+					return backToNamespaceSelectionMsg{}
+				}
+			} else {
+				f = func() tea.Msg {
+					return backToOperationSelectionMsg{}
+				}
 			}
 			cmds = append(cmds, f)
 		case "enter":

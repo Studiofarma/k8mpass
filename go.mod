@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.2
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/google/uuid v1.3.0
+	github.com/joho/godotenv v1.5.1
 	k8s.io/api v0.28.1
 	k8s.io/apimachinery v0.28.1
 )

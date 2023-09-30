@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -9,6 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log"
+	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -31,10 +34,96 @@ func fetchNamespaces() tea.Msg {
 		return errMsg(err)
 	}
 	var items []NamespaceItem
+	sleepingInfo, err := getReviewAppsSleepingStatus()
 	for _, n := range ns.Items {
-		items = append(items, NamespaceItem(n))
+		var isAwake = false
+		if err != nil {
+			for _, ra := range sleepingInfo {
+				if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
+					isAwake = ra.IsAwake() || isAwake
+				}
+			}
+		}
+		items = append(items, NamespaceItem{n, isAwake})
 	}
 	return namespacesRetrievedMsg{items}
+}
+
+type ThanosResponse struct {
+	Data ThanosData `json:"data"`
+}
+
+type ThanosData struct {
+	Result []ThanosResult `json:"result"`
+}
+
+type ThanosMetric struct {
+	ExportedService string `json:"exported_service"`
+}
+
+type ThanosResult struct {
+	Metric ThanosMetric  `json:"metric"`
+	Value  []interface{} `json:"value"`
+}
+
+func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
+	return func() tea.Msg {
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
+		if err != nil {
+			return errMsg(err)
+		}
+		q := req.URL.Query()
+		query := os.Getenv("THANOS_QUERY")
+		q.Add("query", strings.Replace(query, "%NS%", namespace, 1))
+		req.URL.RawQuery = q.Encode()
+		resp, err := client.Do(req)
+		if err != nil {
+			return errMsg(err)
+		}
+		var thResponse ThanosResponse
+		err = json.NewDecoder(resp.Body).Decode(&thResponse)
+		if thResponse.IsAsleep() {
+			return noOutputResultMsg{false, "Review app is sleeping"}
+		} else {
+			return noOutputResultMsg{true, "Review app is awake"}
+		}
+	}
+}
+
+func getReviewAppsSleepingStatus() ([]ThanosResult, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
+	if err != nil {
+		return nil, err
+	}
+	q := req.URL.Query()
+	query := os.Getenv("THANOS_QUERY_ALL_NS")
+	q.Add("query", query)
+	req.URL.RawQuery = q.Encode()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var thResponse ThanosResponse
+	err = json.NewDecoder(resp.Body).Decode(&thResponse)
+	return thResponse.Data.Result, nil
+}
+
+func (r ThanosResponse) IsAsleep() bool {
+	if len(r.Data.Result) == 0 {
+		return true
+	}
+	if r.Data.Result[0].Value[1] == "" || r.Data.Result[0].Value[1] == "0" {
+		return true
+	}
+	return false
+}
+func (r ThanosResult) IsAwake() bool {
+	if r.Value[1] == "" || r.Value[1] == "0" {
+		return false
+	}
+	return true
 }
 
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
@@ -54,6 +143,12 @@ var WakeUpReviewOperation = NamespaceOperation{
 			}
 			return noOutputResultMsg{true, "We woke it up!"}
 		}
+	},
+}
+var CheckSleepingStatusOperation = NamespaceOperation{
+	Name: "Check if review app is asleep",
+	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
+		return checkIfReviewAppIsAsleep(namespace)
 	},
 }
 
@@ -131,7 +226,7 @@ var OpenApplicationOperation = NamespaceOperation{
 			}
 			Openbrowser("https://" + dbmsUrl)
 
-			return noOutputResultMsg{true, "App is ready. Who is Bruno Marotta?"}
+			return noOutputResultMsg{true, "App is ready"}
 		}
 	},
 }

@@ -23,7 +23,7 @@ const (
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []NamespaceOperation{WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
+	ops := []NamespaceOperation{CheckSleepingStatusOperation, WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
@@ -76,7 +76,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
-		m.namespaceModel.Reset()
+		//m.namespaceModel.Reset()
 	case backToOperationSelectionMsg:
 		m.state = OperationSelection
 		m.operationModel.Reset()
