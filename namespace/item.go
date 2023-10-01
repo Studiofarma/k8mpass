@@ -11,18 +11,18 @@ import (
 )
 
 type NamespaceItem struct {
-	K8sNamespace     v1.Namespace
-	IsAwake          bool
-	CustomProperties map[string]string
+	K8sNamespace       v1.Namespace
+	IsAwake            bool
+	ExtendedProperties map[string]string
 }
 
 func (n NamespaceItem) FilterValue() string {
 	return n.K8sNamespace.Name
 }
 
-func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceCustomProperty) {
+func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
 	for _, p := range properties {
-		n.CustomProperties[p.Name] = p.Func(&n.K8sNamespace)
+		n.ExtendedProperties[p.Name] = p.ExtendSingle(n.K8sNamespace)
 	}
 }
 
@@ -48,7 +48,7 @@ func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, list
 
 	namespace := i.K8sNamespace.Name
 	customProperties := ""
-	for _, property := range i.CustomProperties {
+	for _, property := range i.ExtendedProperties {
 		customProperties += customPropertiesStyle.Render(property)
 	}
 	fn := unselectedItemStyle.Render

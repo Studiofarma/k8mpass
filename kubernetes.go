@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"path/filepath"
-	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -29,17 +30,12 @@ func getConnection() (*kubernetes.Clientset, error) {
 		kubeConfigPath = args[1]
 	}
 	// To add a minimum spinner time
-	sleep := make(chan string)
-	go func(c chan string) {
-		time.Sleep(200 * time.Millisecond)
-		close(c)
-	}(sleep)
+	sleep := time.NewTimer(time.Millisecond * 500).C
 
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	<-sleep
 	k8s, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
@@ -48,6 +44,7 @@ func getConnection() (*kubernetes.Clientset, error) {
 	if res.Error() != nil {
 		return nil, errors.New(res.Error().Error())
 	}
+	<-sleep
 	return k8s, nil
 }
 

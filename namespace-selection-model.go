@@ -6,13 +6,11 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/studiofarma/k8mpass/namespace"
-	"k8s.io/apimachinery/pkg/watch"
 )
 
 type NamespaceSelectionModel struct {
-	namespaces list.Model
-	nsChannel  <-chan watch.Event
-	properties []namespace.NamespaceCustomProperty
+	messageHandler *namespace.NamespaceMessageHandler
+	namespaces     list.Model
 }
 
 func (n NamespaceSelectionModel) Init() tea.Cmd {
@@ -22,9 +20,8 @@ func (n NamespaceSelectionModel) Init() tea.Cmd {
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case watchNamespaceMsg:
-		n.nsChannel = msg.channel
-		cmds = append(cmds, nextEvent(n.nsChannel))
+	case namespace.WatchingNamespacesMsg:
+		cmds = append(cmds, n.messageHandler.NextEvent)
 		n.namespaces.StopSpinner()
 		n.namespaces.Title = "Select a namespace"
 	case namespace.AddedNamespaceMsg:
@@ -33,14 +30,8 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
-		var withProperties []list.Item
-		for _, i := range ns {
-			cast, _ := i.(namespace.NamespaceItem)
-			cast.LoadCustomProperties(n.properties...)
-			withProperties = append(withProperties, cast)
-
-		}
-		cmds = append(cmds, n.namespaces.SetItems(withProperties))
+		cmds = append(cmds, n.namespaces.SetItems(ns))
+		cmds = append(cmds, n.messageHandler.NextEvent)
 	case namespace.RemovedNamespaceMsg:
 		var idx = -1
 		for i, v := range n.namespaces.Items() {
@@ -49,6 +40,9 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			}
 		}
 		n.namespaces.RemoveItem(idx)
+		cmds = append(cmds, n.messageHandler.NextEvent)
+	case namespace.NextEventMsg:
+		cmds = append(cmds, n.messageHandler.NextEvent)
 	case tea.KeyMsg:
 		if n.namespaces.FilterState() == list.Filtering {
 			break

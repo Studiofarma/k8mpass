@@ -7,18 +7,20 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type NamespaceCustomProperty struct {
-	Name string
-	Func CustomPropertyFunc
+type NamespaceExtension struct {
+	Name         string
+	ExtendSingle ExtendSingleFunc
+	ExtendList   ExtendListFunc
 }
 
-type CustomPropertyFunc func(ns *v1.Namespace) string
+type ExtendSingleFunc func(ns v1.Namespace) string
+type ExtendListFunc func(ns []v1.Namespace) map[string]string
 
-func NamespaceAge(ns *v1.Namespace) string {
-	return fmt.Sprintf("Age: %0.f minutes", time.Now().Sub(ns.CreationTimestamp.Time).Minutes())
+func NamespaceAge(ns v1.Namespace) string {
+	return fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
 }
 
-var NamespaceAgeProperty = NamespaceCustomProperty{
-	Name: "age",
-	Func: NamespaceAge,
+var NamespaceAgeProperty = NamespaceExtension{
+	Name:         "age",
+	ExtendSingle: NamespaceAge,
 }

@@ -51,20 +51,6 @@ func clusterConnect() tea.Msg {
 // 	return namespacesRetrievedMsg{items}
 // }
 
-func watchNamespaces(cs *kubernetes.Clientset) tea.Cmd {
-	return func() tea.Msg {
-		opt := metav1.ListOptions{
-			//		TimeoutSeconds: &timeout,
-		}
-		watcher, err := cs.CoreV1().Namespaces().Watch(context.Background(), opt)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("Watching namespaces")
-		return watchNamespaceMsg{watcher.ResultChan()}
-	}
-}
-
 func nextEvent(ch <-chan watch.Event) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
@@ -77,7 +63,7 @@ func nextEvent(ch <-chan watch.Event) tea.Cmd {
 				}
 			case watch.Added:
 				return namespace.AddedNamespaceMsg{
-					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false, CustomProperties: make(map[string]string)},
+					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false, ExtendedProperties: make(map[string]string)},
 				}
 			}
 			return nil

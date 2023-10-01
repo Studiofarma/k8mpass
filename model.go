@@ -2,6 +2,7 @@ package main
 
 import (
 	"runtime"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,7 +31,9 @@ func initialModel() K8mpassModel {
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces: namespace.New(),
-			properties: []namespace.NamespaceCustomProperty{namespace.NamespaceAgeProperty},
+			messageHandler: namespace.NewHandler(
+				namespace.NamespaceAgeProperty,
+			),
 		},
 		operationModel: OperationModel{
 			operations: initializeOperationList(ops),
@@ -50,7 +53,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case errMsg:
 		m.error = msg
-		return m, tea.Quit
+		return m, tea.Tick(time.Second*5, func(t time.Time) tea.Msg { return tea.Quit })
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -71,7 +74,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
 	case clusterConnectedMsg:
-		cmds = append(cmds, watchNamespaces(K8sCluster.kubernetes))
+		cmds = append(cmds, m.namespaceModel.messageHandler.WatchNamespaces(K8sCluster.kubernetes))
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
 	case backToNamespaceSelectionMsg:
@@ -80,8 +83,6 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case backToOperationSelectionMsg:
 		m.state = OperationSelection
 		m.operationModel.Reset()
-	case nextEventMsg:
-		cmds = append(cmds, nextEvent(m.namespaceModel.nsChannel))
 	}
 	// Model specific messages
 	switch msg.(type) {

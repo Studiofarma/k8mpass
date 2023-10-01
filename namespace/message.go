@@ -8,10 +8,20 @@ type AddedNamespaceMsg struct {
 	Namespace NamespaceItem
 }
 
-func (m AddedNamespaceMsg) isNamespaceMessage() {}
-
 type RemovedNamespaceMsg struct {
 	Namespace NamespaceItem
 }
 
-func (m RemovedNamespaceMsg) isNamespaceMessage() {}
+type NextEventMsg struct{}
+
+type WatchingNamespacesMsg struct{}
+
+type ErrorMsg struct {
+	err error
+}
+
+func (m AddedNamespaceMsg) isNamespaceMessage()     {}
+func (m RemovedNamespaceMsg) isNamespaceMessage()   {}
+func (m WatchingNamespacesMsg) isNamespaceMessage() {}
+func (m NextEventMsg) isNamespaceMessage()          {}
+func (m ErrorMsg) isNamespaceMessage()              {}
