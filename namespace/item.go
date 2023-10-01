@@ -12,7 +12,6 @@ import (
 
 type NamespaceItem struct {
 	K8sNamespace       v1.Namespace
-	IsAwake            bool
 	ExtendedProperties map[string]string
 }
 

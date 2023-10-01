@@ -59,11 +59,11 @@ func nextEvent(ch <-chan watch.Event) tea.Cmd {
 			switch event.Type {
 			case watch.Deleted:
 				return namespace.RemovedNamespaceMsg{
-					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false},
+					Namespace: namespace.NamespaceItem{K8sNamespace: *item},
 				}
 			case watch.Added:
 				return namespace.AddedNamespaceMsg{
-					Namespace: namespace.NamespaceItem{K8sNamespace: *item, IsAwake: false, ExtendedProperties: make(map[string]string)},
+					Namespace: namespace.NamespaceItem{K8sNamespace: *item, ExtendedProperties: make(map[string]string)},
 				}
 			}
 			return nil

@@ -74,7 +74,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
 	case clusterConnectedMsg:
-		cmds = append(cmds, m.namespaceModel.messageHandler.WatchNamespaces(K8sCluster.kubernetes))
+		cmds = append(cmds, m.namespaceModel.messageHandler.GetNamespaces(K8sCluster.kubernetes))
 	case namespaceSelectedMsg:
 		m.state = OperationSelection
 	case backToNamespaceSelectionMsg:

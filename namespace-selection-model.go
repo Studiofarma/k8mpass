@@ -22,8 +22,15 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	switch msg := msg.(type) {
 	case namespace.WatchingNamespacesMsg:
 		cmds = append(cmds, n.messageHandler.NextEvent)
+	case namespace.NamespaceListMsg:
+		items := make([]list.Item, len(msg.Namespaces))
+		for i, ns := range msg.Namespaces {
+			items[i] = ns
+		}
+		cmds = append(cmds, n.namespaces.SetItems(items))
 		n.namespaces.StopSpinner()
 		n.namespaces.Title = "Select a namespace"
+		cmds = append(cmds)
 	case namespace.AddedNamespaceMsg:
 		cmds = append(cmds, n.namespaces.InsertItem(0, msg.Namespace))
 		ns := n.namespaces.Items()
@@ -43,6 +50,8 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.messageHandler.NextEvent)
 	case namespace.NextEventMsg:
 		cmds = append(cmds, n.messageHandler.NextEvent)
+	case namespace.ErrorMsg:
+		n.namespaces.NewStatusMessage(msg.Err.Error())
 	case tea.KeyMsg:
 		if n.namespaces.FilterState() == list.Filtering {
 			break

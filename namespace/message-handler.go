@@ -36,16 +36,41 @@ func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	}
 }
 
-func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset) tea.Cmd {
+func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceversion string) tea.Cmd {
 	return tea.Sequence(
 		func() tea.Msg {
-			err := nh.service.Subscribe(cs)
+			err := nh.service.Subscribe(cs, resourceversion)
 			if err != nil {
 				return ErrorMsg{err}
 			}
 			return WatchingNamespacesMsg{}
 		},
 		nh.NextEvent,
+	)
+}
+
+func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
+	res, err := nh.service.GetNamespaces(cs)
+	return tea.Sequence(
+		func() tea.Msg {
+			if err != nil {
+				return ErrorMsg{err}
+			}
+			var namespaces []NamespaceItem
+			for _, n := range res.Items {
+				extendedProperties := make(map[string]string)
+
+				for _, ext := range nh.extensions {
+					extendedProperties[ext.Name] = ext.ExtendSingle(n)
+				}
+				namespaces = append(namespaces, NamespaceItem{n, extendedProperties})
+			}
+			return NamespaceListMsg{
+				Namespaces:      namespaces,
+				ResourceVersion: res.ResourceVersion,
+			}
+		},
+		nh.WatchNamespaces(cs, res.ResourceVersion),
 	)
 }
 

@@ -12,12 +12,17 @@ type RemovedNamespaceMsg struct {
 	Namespace NamespaceItem
 }
 
+type NamespaceListMsg struct {
+	Namespaces      []NamespaceItem
+	ResourceVersion string
+}
+
 type NextEventMsg struct{}
 
 type WatchingNamespacesMsg struct{}
 
 type ErrorMsg struct {
-	err error
+	Err error
 }
 
 func (m AddedNamespaceMsg) isNamespaceMessage()     {}
