@@ -33,6 +33,7 @@ func initialModel() K8mpassModel {
 			namespaces: namespace.New(),
 			messageHandler: namespace.NewHandler(
 				namespace.NamespaceAgeProperty,
+				ReviewAppSleepStatus,
 			),
 		},
 		operationModel: OperationModel{

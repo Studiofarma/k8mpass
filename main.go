@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	tea.LogToFile("debug/debug.log", "DEBUG")
 	if err := godotenv.Load(".env"); err != nil {
 		log.Println("Failed to load .env")
 	} else {

@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"log"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,9 @@ func (s *NamespaceService) Subscribe(cs *kubernetes.Clientset, resourceVersion s
 }
 
 func (s NamespaceService) GetEvent() watch.Event {
-	return <-s.Events
+	event := <-s.Events
+	log.Println("Received namespace event of type ", event.Type)
+	return event
 }
 
 func (s NamespaceService) GetNamespaces(cs *kubernetes.Clientset) (*v1.NamespaceList, error) {

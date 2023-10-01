@@ -46,39 +46,6 @@ func clusterConnect() tea.Msg {
 // 	return namespacesRetrievedMsg{items}
 // }
 
-type ThanosResponse struct {
-	Data ThanosData `json:"data"`
-}
-
-type ThanosData struct {
-	Result []ThanosResult `json:"result"`
-}
-
-type ThanosMetric struct {
-	ExportedService string `json:"exported_service"`
-}
-
-type ThanosResult struct {
-	Metric ThanosMetric  `json:"metric"`
-	Value  []interface{} `json:"value"`
-}
-
-func (r ThanosResponse) IsAsleep() bool {
-	if len(r.Data.Result) == 0 {
-		return true
-	}
-	if r.Data.Result[0].Value[1] == "" || r.Data.Result[0].Value[1] == "0" {
-		return true
-	}
-	return false
-}
-func (r ThanosResult) IsAwake() bool {
-	if r.Value[1] == "" || r.Value[1] == "0" {
-		return false
-	}
-	return true
-}
-
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
 
 type NamespaceOperation struct {

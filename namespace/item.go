@@ -3,6 +3,7 @@ package namespace
 import (
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -21,7 +22,17 @@ func (n NamespaceItem) FilterValue() string {
 
 func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
 	for _, p := range properties {
-		n.ExtendedProperties[p.Name] = p.ExtendSingle(n.K8sNamespace)
+		fn := p.ExtendSingle
+		if fn == nil {
+			log.Println(fmt.Sprintf("Missing extention function for %s", p.Name), "namespace:", n.K8sNamespace.Name)
+			continue
+		}
+		value, err := fn(n.K8sNamespace)
+		if err != nil {
+			log.Println(fmt.Sprintf("Error while computing extension %s", p.Name), "namespace:", n.K8sNamespace.Name)
+			continue
+		}
+		n.ExtendedProperties[p.Name] = string(value)
 	}
 }
 

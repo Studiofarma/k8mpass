@@ -16,17 +16,19 @@ type NamespaceExtension struct {
 type NamespaceName string
 type ExtensionValue string
 
-type ExtendSingleFunc func(ns v1.Namespace) string
+type ExtendSingleFunc func(ns v1.Namespace) (ExtensionValue, error)
 type ExtendListFunc func(ns []v1.Namespace) map[NamespaceName]ExtensionValue
 
-func NamespaceAge(ns v1.Namespace) string {
-	return fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
+func NamespaceAge(ns v1.Namespace) (ExtensionValue, error) {
+	res := fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
+	return ExtensionValue(res), nil
 }
 
 func NamespaceAgeList(ns []v1.Namespace) map[NamespaceName]ExtensionValue {
 	values := make(map[NamespaceName]ExtensionValue)
 	for _, n := range ns {
-		values[NamespaceName(n.Name)] = ExtensionValue(NamespaceAge(n))
+		age, _ := NamespaceAge(n)
+		values[NamespaceName(n.Name)] = age
 	}
 	return values
 }

@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"log"
+
 	tea "github.com/charmbracelet/bubbletea"
 	k8mpasskube "github.com/studiofarma/k8mpass/kubernetes"
 	v1 "k8s.io/api/core/v1"
@@ -16,24 +18,21 @@ type NamespaceMessageHandler struct {
 func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
 	item := event.Object.(*v1.Namespace)
-	extendedProperties := make(map[string]string)
-
-	for _, ext := range nh.extensions {
-		fn := ext.ExtendSingle
-		if fn == nil {
-			continue
-		}
-		extendedProperties[ext.Name] = fn(*item)
+	namespace := NamespaceItem{
+		*item,
+		make(map[string]string),
 	}
-
 	switch event.Type {
 	case watch.Deleted:
+		log.Printf("Deleted namespace: %s ", item.Name)
 		return RemovedNamespaceMsg{
-			Namespace: NamespaceItem{K8sNamespace: *item},
+			Namespace: namespace,
 		}
 	case watch.Added:
+		namespace.LoadCustomProperties(nh.extensions...)
+		log.Printf("Added namespace: %s ", item.Name)
 		return AddedNamespaceMsg{
-			Namespace: NamespaceItem{K8sNamespace: *item, ExtendedProperties: extendedProperties},
+			Namespace: namespace,
 		}
 	default:
 		return NextEventMsg{}
