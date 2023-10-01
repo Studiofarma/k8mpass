@@ -19,7 +19,11 @@ func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	extendedProperties := make(map[string]string)
 
 	for _, ext := range nh.extensions {
-		extendedProperties[ext.Name] = ext.ExtendSingle(*item)
+		fn := ext.ExtendSingle
+		if fn == nil {
+			continue
+		}
+		extendedProperties[ext.Name] = fn(*item)
 	}
 
 	switch event.Type {
@@ -36,10 +40,10 @@ func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	}
 }
 
-func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceversion string) tea.Cmd {
+func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVersion string) tea.Cmd {
 	return tea.Sequence(
 		func() tea.Msg {
-			err := nh.service.Subscribe(cs, resourceversion)
+			err := nh.service.Subscribe(cs, resourceVersion)
 			if err != nil {
 				return ErrorMsg{err}
 			}
@@ -49,6 +53,8 @@ func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, res
 	)
 }
 
+type namespaceName string
+
 func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 	res, err := nh.service.GetNamespaces(cs)
 	return tea.Sequence(
@@ -57,13 +63,22 @@ func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.C
 				return ErrorMsg{err}
 			}
 			var namespaces []NamespaceItem
-			for _, n := range res.Items {
-				extendedProperties := make(map[string]string)
-
-				for _, ext := range nh.extensions {
-					extendedProperties[ext.Name] = ext.ExtendSingle(n)
+			namespaceProperties := make(map[namespaceName]map[string]string)
+			for _, e := range nh.extensions {
+				fn := e.ExtendList
+				if fn == nil {
+					continue
 				}
-				namespaces = append(namespaces, NamespaceItem{n, extendedProperties})
+				nsToValue := fn(res.Items)
+				for ns, value := range nsToValue {
+					if namespaceProperties[namespaceName(ns)] == nil {
+						namespaceProperties[namespaceName(ns)] = make(map[string]string)
+					}
+					namespaceProperties[namespaceName(ns)][e.Name] = string(value)
+				}
+			}
+			for _, n := range res.Items {
+				namespaces = append(namespaces, NamespaceItem{n, namespaceProperties[namespaceName(n.Name)]})
 			}
 			return NamespaceListMsg{
 				Namespaces:      namespaces,

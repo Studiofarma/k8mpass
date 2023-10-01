@@ -14,10 +14,8 @@ type NamespaceService struct {
 }
 
 func (s *NamespaceService) Subscribe(cs *kubernetes.Clientset, resourceVersion string) error {
-	// sendInitialEvents := false
 	opt := metav1.ListOptions{
 		ResourceVersion: resourceVersion,
-		// SendInitialEvents: &sendInitialEvents,
 	}
 	watcher, err := cs.CoreV1().Namespaces().Watch(context.TODO(), opt)
 	if err != nil {

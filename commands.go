@@ -2,21 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/studiofarma/k8mpass/namespace"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -51,27 +46,6 @@ func clusterConnect() tea.Msg {
 // 	return namespacesRetrievedMsg{items}
 // }
 
-func nextEvent(ch <-chan watch.Event) tea.Cmd {
-	return tea.Batch(
-		func() tea.Msg {
-			event := <-ch
-			item := event.Object.(*v1.Namespace)
-			switch event.Type {
-			case watch.Deleted:
-				return namespace.RemovedNamespaceMsg{
-					Namespace: namespace.NamespaceItem{K8sNamespace: *item},
-				}
-			case watch.Added:
-				return namespace.AddedNamespaceMsg{
-					Namespace: namespace.NamespaceItem{K8sNamespace: *item, ExtendedProperties: make(map[string]string)},
-				}
-			}
-			return nil
-		},
-		func() tea.Msg { return nextEventMsg{} },
-	)
-}
-
 type ThanosResponse struct {
 	Data ThanosData `json:"data"`
 }
@@ -87,50 +61,6 @@ type ThanosMetric struct {
 type ThanosResult struct {
 	Metric ThanosMetric  `json:"metric"`
 	Value  []interface{} `json:"value"`
-}
-
-func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
-	return func() tea.Msg {
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
-		if err != nil {
-			return errMsg(err)
-		}
-		q := req.URL.Query()
-		query := os.Getenv("THANOS_QUERY")
-		q.Add("query", strings.Replace(query, "%NS%", namespace, 1))
-		req.URL.RawQuery = q.Encode()
-		resp, err := client.Do(req)
-		if err != nil {
-			return errMsg(err)
-		}
-		var thResponse ThanosResponse
-		err = json.NewDecoder(resp.Body).Decode(&thResponse)
-		if thResponse.IsAsleep() {
-			return noOutputResultMsg{false, "Review app is sleeping"}
-		} else {
-			return noOutputResultMsg{true, "Review app is awake"}
-		}
-	}
-}
-
-func getReviewAppsSleepingStatus() ([]ThanosResult, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
-	if err != nil {
-		return nil, err
-	}
-	q := req.URL.Query()
-	query := os.Getenv("THANOS_QUERY_ALL_NS")
-	q.Add("query", query)
-	req.URL.RawQuery = q.Encode()
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	var thResponse ThanosResponse
-	err = json.NewDecoder(resp.Body).Decode(&thResponse)
-	return thResponse.Data.Result, nil
 }
 
 func (r ThanosResponse) IsAsleep() bool {

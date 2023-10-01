@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/client-go/kubernetes"
@@ -80,12 +79,4 @@ func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
 	_, err = jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
 
 	return err
-}
-
-func getNamespaces(k8s *kubernetes.Clientset) (*v1.NamespaceList, error) {
-	nl, err := k8s.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return nl, nil
 }

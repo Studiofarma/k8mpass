@@ -30,7 +30,6 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.namespaces.SetItems(items))
 		n.namespaces.StopSpinner()
 		n.namespaces.Title = "Select a namespace"
-		cmds = append(cmds)
 	case namespace.AddedNamespaceMsg:
 		cmds = append(cmds, n.namespaces.InsertItem(0, msg.Namespace))
 		ns := n.namespaces.Items()

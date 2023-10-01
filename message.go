@@ -1,7 +1,6 @@
 package main
 
 import (
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -28,9 +27,3 @@ type namespaceSelectedMsg struct {
 
 type backToNamespaceSelectionMsg struct{}
 type backToOperationSelectionMsg struct{}
-
-type watchNamespaceMsg struct {
-	channel <-chan watch.Event
-}
-
-type nextEventMsg struct{}

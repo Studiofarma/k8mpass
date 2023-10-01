@@ -28,10 +28,6 @@ var (
 				Foreground(lipgloss.Color("#ff6666"))
 )
 
-type OperationItem struct {
-	name string
-}
-
 type OperationItemDelegate struct {
 	NamespaceOperation NamespaceOperation
 }
@@ -75,7 +71,7 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	for _, op := range ops {
 		items = append(items, op)
 	}
-	l := list.New(items, OperationItemDelegate{}, 80, 20)
+	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
 	//l.Title = "Select an operation on"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(true)
