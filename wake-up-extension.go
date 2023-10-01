@@ -15,6 +15,7 @@ import (
 var ReviewAppSleepStatus = namespace.NamespaceExtension{
 	Name:         "sleeping",
 	ExtendSingle: IsReviewAppSleeping,
+	ExtendList:   AreReviewAppsSleeping,
 }
 
 type ThanosResponse struct {
@@ -119,7 +120,7 @@ func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
 		client := &http.Client{}
 		req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
 		if err != nil {
-			return errMsg(err)
+			return noOutputResultMsg{false, err.Error()}
 		}
 		q := req.URL.Query()
 		query := os.Getenv("THANOS_QUERY")
@@ -127,18 +128,14 @@ func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
 		req.URL.RawQuery = q.Encode()
 		resp, err := client.Do(req)
 		if err != nil {
-			return errMsg(err)
+			return noOutputResultMsg{false, err.Error()}
 		}
 		var thResponse ThanosResponse
 		err = json.NewDecoder(resp.Body).Decode(&thResponse)
 		if err != nil {
-			return errMsg(err)
+			return noOutputResultMsg{false, err.Error()}
 		}
-		if thResponse.IsAwake() {
-			return noOutputResultMsg{true, "Review app is awake"}
-		} else {
-			return noOutputResultMsg{false, "Review app is sleeping"}
-		}
+		return noOutputResultMsg{true, thResponse.Status()}
 	}
 }
 

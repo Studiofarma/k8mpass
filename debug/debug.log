@@ -55,3 +55,5 @@ DEBUG 2023/10/01 20:50:02 Received namespace event of type  MODIFIED
 DEBUG 2023/10/01 20:50:08 Received namespace event of type  MODIFIED
 DEBUG 2023/10/01 20:50:08 Received namespace event of type  DELETED
 DEBUG 2023/10/01 20:50:08 Deleted namespace: review 
+DEBUG 2023/10/01 20:54:47 Failed to load .env
+DEBUG 2023/10/01 20:55:38 Failed to load .env
