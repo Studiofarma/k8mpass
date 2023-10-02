@@ -1,6 +1,12 @@
 package pod
 
-import v1 "k8s.io/api/core/v1"
+import (
+	"fmt"
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+	"io"
+	v1 "k8s.io/api/core/v1"
+)
 
 type Item struct {
 	K8sPod             v1.Pod
@@ -15,4 +21,26 @@ type Property struct {
 
 func (n Item) FilterValue() string {
 	return n.K8sPod.Name
+}
+
+type ItemDelegate struct{}
+
+func (n ItemDelegate) Height() int {
+	return 1
+}
+
+func (n ItemDelegate) Spacing() int {
+	return 0
+}
+
+func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	return nil
+}
+
+func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(Item)
+	if !ok {
+		return
+	}
+	fmt.Fprintf(w, "  %s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)))
 }

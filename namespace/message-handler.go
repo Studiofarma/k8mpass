@@ -17,7 +17,10 @@ type MessageHandler struct {
 
 func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
-	item := event.Object.(*v1.Namespace)
+	item, ok := event.Object.(*v1.Namespace)
+	if !ok {
+		return NextEventMsg{}
+	}
 	namespace := Item{
 		K8sNamespace:       *item,
 		ExtendedProperties: make([]Property, 0),

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/studiofarma/k8mpass/pod"
 	"runtime"
 	"time"
 
@@ -14,6 +16,8 @@ type K8mpassModel struct {
 	state          modelState
 	namespaceModel NamespaceSelectionModel
 	operationModel OperationModel
+	podModel       PodSelectionModel
+	ctx            *context.Context
 }
 
 type modelState int32
@@ -21,6 +25,7 @@ type modelState int32
 const (
 	NamespaceSelection modelState = 1
 	OperationSelection modelState = 2
+	PodSelection       modelState = 3
 )
 
 func initialModel() K8mpassModel {
@@ -39,6 +44,10 @@ func initialModel() K8mpassModel {
 		operationModel: OperationModel{
 			operations: initializeOperationList(ops),
 			helpFooter: initializeHelpFooter(),
+		},
+		podModel: PodSelectionModel{
+			pods:           pod.New(),
+			messageHandler: pod.NewHandler(),
 		},
 	}
 }
@@ -72,12 +81,15 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.namespaceModel.namespaces.SetWidth(msg.Width + correction)
 		m.operationModel.operations.SetHeight(msg.Height + correction)
 		m.operationModel.operations.SetWidth(msg.Width + correction)
+		m.podModel.pods.SetHeight(msg.Height + correction)
+		m.podModel.pods.SetWidth(msg.Width + correction)
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
 	case clusterConnectedMsg:
 		cmds = append(cmds, m.namespaceModel.messageHandler.GetNamespaces(K8sCluster.kubernetes))
 	case namespaceSelectedMsg:
-		m.state = OperationSelection
+		cmds = append(cmds, m.podModel.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
+		m.state = PodSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
@@ -105,6 +117,10 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		om, omCmd := m.operationModel.Update(msg)
 		m.operationModel = om
 		cmds = append(cmds, omCmd)
+	case PodSelection:
+		pm, pmCmd := m.podModel.Update(msg)
+		m.podModel = pm
+		cmds = append(cmds, pmCmd)
 	}
 	return m, tea.Batch(cmds...)
 }
@@ -118,6 +134,8 @@ func (m K8mpassModel) View() string {
 		return m.namespaceModel.View()
 	case OperationSelection:
 		return m.operationModel.View()
+	case PodSelection:
+		return m.podModel.View()
 	}
 	return ""
 }

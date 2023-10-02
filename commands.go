@@ -24,28 +24,6 @@ func clusterConnect() tea.Msg {
 	return clusterConnectedMsg{cs}
 }
 
-// func fetchNamespaces() tea.Msg {
-// 	time.Sleep(500 * time.Millisecond)
-// 	ns, err := getNamespaces(K8sCluster.kubernetes)
-// 	if err != nil {
-// 		return errMsg(err)
-// 	}
-// 	var items []namespace.NamespaceItem
-// 	sleepingInfo, err := getReviewAppsSleepingStatus()
-// 	for _, n := range ns.Items {
-// 		var isAwake = false
-// 		if err != nil {
-// 			for _, ra := range sleepingInfo {
-// 				if strings.HasPrefix(ra.Metric.ExportedService, n.Name) {
-// 					isAwake = ra.IsAwake() || isAwake
-// 				}
-// 			}
-// 		}
-// 		items = append(items, namespace.NamespaceItem{n, isAwake})
-// 	}
-// 	return namespacesRetrievedMsg{items}
-// }
-
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
 
 type NamespaceOperation struct {

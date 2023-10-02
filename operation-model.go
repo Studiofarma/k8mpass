@@ -42,9 +42,7 @@ func (o OperationModel) Update(msg tea.Msg) (OperationModel, tea.Cmd) {
 		o.output = msg.body
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
-		case "t":
-			cmds = append(cmds, checkIfReviewAppIsAsleep(o.namespace))
-		case "backspace":
+		case "backspace", "esc":
 			var f func() tea.Msg
 			o.operations.NewStatusMessage("")
 			if !o.isCompleted {

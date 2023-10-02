@@ -82,13 +82,14 @@ func initializeOperationList(ops []NamespaceOperation) list.Model {
 	additionalKeys := func() []key.Binding {
 		return []key.Binding{
 			key.NewBinding(
-				key.WithKeys("backspace"),
-				key.WithHelp("⌫", "back"),
+				key.WithKeys("backspace", "esc"),
+				key.WithHelp("⌫/esc", "back"),
 			),
 		}
 	}
 	l.KeyMap.GoToEnd.Unbind()
 	l.KeyMap.GoToStart.Unbind()
+	l.KeyMap.Quit.SetKeys("ctrl+c")
 	l.KeyMap.ShowFullHelp.Unbind()
 	l.KeyMap.CloseFullHelp.Unbind()
 	l.KeyMap.CursorUp.SetHelp("↑", "up")

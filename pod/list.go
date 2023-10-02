@@ -1,24 +1,17 @@
-package namespace
+package pod
 
 import (
-	"strings"
-
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 )
 
-func (n Item) IsReviewApp() bool {
-	return strings.HasPrefix(n.K8sNamespace.Name, "review")
-}
-
 func New() list.Model {
 	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)
-	l.Title = "Loading namespaces..."
+	l.Title = "Pods"
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)
-	l.SetFilteringEnabled(true)
-	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle
-	l.SetStatusBarItemName("namespace", "namespaces")
+	l.SetStatusBarItemName("pod", "pods")
 	l.Styles.NoItems.MarginLeft(2)
 	l.KeyMap.GoToEnd.Unbind()
 	l.KeyMap.Quit.SetKeys("q", "ctrl+c")
@@ -29,5 +22,16 @@ func New() list.Model {
 	l.KeyMap.CursorDown.SetHelp("↓", "down")
 	l.KeyMap.NextPage.SetHelp("→", "right")
 	l.KeyMap.PrevPage.SetHelp("←", "left")
+	additionalKeys := func() []key.Binding {
+		return []key.Binding{
+			key.NewBinding(
+				key.WithKeys("backspace", "esc"),
+				key.WithHelp("⌫/esc", "back"),
+			),
+		}
+	}
+
+	l.AdditionalFullHelpKeys = additionalKeys
+	l.AdditionalShortHelpKeys = additionalKeys
 	return l
 }
