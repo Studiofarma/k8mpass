@@ -32,7 +32,7 @@ func initialModel() K8mpassModel {
 		namespaceModel: NamespaceSelectionModel{
 			namespaces: namespace.New(),
 			messageHandler: namespace.NewHandler(
-				namespace.NamespaceAgeProperty,
+				//namespace.NamespaceAgeProperty,
 				ReviewAppSleepStatus,
 			),
 		},

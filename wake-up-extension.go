@@ -56,6 +56,9 @@ func (r ThanosResponse) IsAwakeByNamespace(namespace string) bool {
 }
 
 func (r ThanosResponse) StatusByNamespace(namespace string) string {
+	if !strings.HasPrefix(namespace, "review") {
+		return ""
+	}
 	if r.IsAwakeByNamespace(namespace) {
 		return "Review app is awake"
 	} else {
@@ -87,6 +90,9 @@ func (r ThanosResponse) Status() string {
 }
 
 func IsReviewAppSleeping(ns v1.Namespace) (namespace.ExtensionValue, error) {
+	if !strings.HasPrefix(ns.Name, "review") {
+		return "", nil
+	}
 	thanosUrl, isPresent := os.LookupEnv("THANOS_URL")
 	if !isPresent {
 		return "", errors.New("env var THANOS_URL not present")
