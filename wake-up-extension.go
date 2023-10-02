@@ -12,6 +12,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	sleeping = "Sleeping..."
+	awake    = "Awake!"
+)
+
 var ReviewAppSleepStatus = namespace.NamespaceExtension{
 	Name:         "sleeping",
 	ExtendSingle: IsReviewAppSleeping,
@@ -60,9 +65,9 @@ func (r ThanosResponse) StatusByNamespace(namespace string) string {
 		return ""
 	}
 	if r.IsAwakeByNamespace(namespace) {
-		return "Review app is awake"
+		return awake
 	} else {
-		return "Review app is sleeping"
+		return sleeping
 	}
 }
 
@@ -75,17 +80,17 @@ func (r ThanosResult) IsAwake() bool {
 
 func (r ThanosResult) Status() string {
 	if r.IsAwake() {
-		return "Review app is awake"
+		return awake
 	} else {
-		return "Review app is sleeping"
+		return sleeping
 	}
 }
 
 func (r ThanosResponse) Status() string {
 	if r.IsAwake() {
-		return "Review app is awake"
+		return awake
 	} else {
-		return "Review app is sleeping"
+		return sleeping
 	}
 }
 
