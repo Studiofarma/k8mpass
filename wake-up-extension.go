@@ -17,7 +17,7 @@ const (
 	awake    = "Awake!"
 )
 
-var ReviewAppSleepStatus = namespace.NamespaceExtension{
+var ReviewAppSleepStatus = namespace.Extension{
 	Name:         "sleeping",
 	ExtendSingle: IsReviewAppSleeping,
 	ExtendList:   AreReviewAppsSleeping,
@@ -150,7 +150,7 @@ func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
 	}
 }
 
-func AreReviewAppsSleeping(ns []v1.Namespace) map[namespace.NamespaceName]namespace.ExtensionValue {
+func AreReviewAppsSleeping(ns []v1.Namespace) map[namespace.Name]namespace.ExtensionValue {
 	thanosUrl, isPresent := os.LookupEnv("THANOS_URL")
 	if !isPresent {
 		return nil
@@ -176,9 +176,9 @@ func AreReviewAppsSleeping(ns []v1.Namespace) map[namespace.NamespaceName]namesp
 	if err != nil {
 		return nil
 	}
-	values := make(map[namespace.NamespaceName]namespace.ExtensionValue, len(ns))
+	values := make(map[namespace.Name]namespace.ExtensionValue, len(ns))
 	for _, n := range ns {
-		values[namespace.NamespaceName(n.Name)] = namespace.ExtensionValue(thResponse.StatusByNamespace(n.Name))
+		values[namespace.Name(n.Name)] = namespace.ExtensionValue(thResponse.StatusByNamespace(n.Name))
 	}
 
 	return values

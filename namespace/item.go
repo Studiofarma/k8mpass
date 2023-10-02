@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type NamespaceItem struct {
+type Item struct {
 	K8sNamespace       v1.Namespace
 	ExtendedProperties []Property
 }
@@ -22,11 +22,11 @@ type Property struct {
 	Order int
 }
 
-func (n NamespaceItem) FilterValue() string {
+func (n Item) FilterValue() string {
 	return n.K8sNamespace.Name
 }
 
-func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
+func (n *Item) LoadCustomProperties(properties ...Extension) {
 	for idx, p := range properties {
 		fn := p.ExtendSingle
 		if fn == nil {
@@ -42,22 +42,22 @@ func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
 	}
 }
 
-type NamespaceItemDelegate struct{}
+type ItemDelegate struct{}
 
-func (n NamespaceItemDelegate) Height() int {
+func (n ItemDelegate) Height() int {
 	return 1
 }
 
-func (n NamespaceItemDelegate) Spacing() int {
+func (n ItemDelegate) Spacing() int {
 	return 0
 }
 
-func (n NamespaceItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
-func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(NamespaceItem)
+func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+	i, ok := listItem.(Item)
 	if !ok {
 		return
 	}

@@ -6,12 +6,12 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-func (n NamespaceItem) IsReviewApp() bool {
+func (n Item) IsReviewApp() bool {
 	return strings.HasPrefix(n.K8sNamespace.Name, "review")
 }
 
 func New() list.Model {
-	l := list.New([]list.Item{}, NamespaceItemDelegate{}, pageWidth, pageHeight)
+	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)
 	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)

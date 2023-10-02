@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -9,7 +10,7 @@ import (
 )
 
 type NamespaceSelectionModel struct {
-	messageHandler *namespace.NamespaceMessageHandler
+	messageHandler *namespace.MessageHandler
 	namespaces     list.Model
 }
 
@@ -38,6 +39,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		})
 		cmds = append(cmds, n.namespaces.SetItems(ns))
 		cmds = append(cmds, n.messageHandler.NextEvent)
+		cmds = append(cmds, n.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.RemovedNamespaceMsg:
 		var idx = -1
 		for i, v := range n.namespaces.Items() {
@@ -47,6 +49,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		}
 		n.namespaces.RemoveItem(idx)
 		cmds = append(cmds, n.messageHandler.NextEvent)
+		cmds = append(cmds, n.namespaces.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.NextEventMsg:
 		cmds = append(cmds, n.messageHandler.NextEvent)
 	case namespace.ErrorMsg:
@@ -57,7 +60,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		}
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			i, ok := n.namespaces.SelectedItem().(namespace.NamespaceItem)
+			i, ok := n.namespaces.SelectedItem().(namespace.Item)
 			if ok {
 				nsCommand := func() tea.Msg {
 					return namespaceSelectedMsg{i.K8sNamespace.Name}

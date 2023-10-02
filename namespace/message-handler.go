@@ -10,15 +10,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type NamespaceMessageHandler struct {
+type MessageHandler struct {
 	service    k8mpasskube.NamespaceService
-	extensions []NamespaceExtension
+	extensions []Extension
 }
 
-func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
+func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
 	item := event.Object.(*v1.Namespace)
-	namespace := NamespaceItem{
+	namespace := Item{
 		K8sNamespace:       *item,
 		ExtendedProperties: make([]Property, 0),
 	}
@@ -39,7 +39,7 @@ func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	}
 }
 
-func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVersion string) tea.Cmd {
+func (nh *MessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVersion string) tea.Cmd {
 	return tea.Sequence(
 		func() tea.Msg {
 			err := nh.service.Subscribe(cs, resourceVersion)
@@ -54,14 +54,14 @@ func (nh *NamespaceMessageHandler) WatchNamespaces(cs *kubernetes.Clientset, res
 
 type namespaceName string
 
-func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
+func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 	res, err := nh.service.GetNamespaces(cs)
 	return tea.Sequence(
 		func() tea.Msg {
 			if err != nil {
 				return ErrorMsg{err}
 			}
-			var namespaces []NamespaceItem
+			var namespaces []Item
 			namespaceProperties := make(map[namespaceName][]Property)
 			for idx, e := range nh.extensions {
 				fn := e.ExtendList
@@ -82,7 +82,7 @@ func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.C
 				}
 			}
 			for _, n := range res.Items {
-				namespaces = append(namespaces, NamespaceItem{n, namespaceProperties[namespaceName(n.Name)]})
+				namespaces = append(namespaces, Item{n, namespaceProperties[namespaceName(n.Name)]})
 			}
 			return NamespaceListMsg{
 				Namespaces:      namespaces,
@@ -93,8 +93,8 @@ func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.C
 	)
 }
 
-func NewHandler(exts ...NamespaceExtension) *NamespaceMessageHandler {
-	return &NamespaceMessageHandler{
+func NewHandler(exts ...Extension) *MessageHandler {
+	return &MessageHandler{
 		service:    k8mpasskube.NamespaceService{},
 		extensions: exts,
 	}

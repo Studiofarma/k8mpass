@@ -87,7 +87,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	// Model specific messages
 	switch msg.(type) {
-	case namespace.NamespaceMessage:
+	case namespace.Message:
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
 		cmds = append(cmds, nmCmd)
@@ -95,7 +95,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.state {
 	case NamespaceSelection:
-		if _, ok := msg.(namespace.NamespaceMessage); ok {
+		if _, ok := msg.(namespace.Message); ok {
 			break
 		}
 		nm, nmCmd := m.namespaceModel.Update(msg)

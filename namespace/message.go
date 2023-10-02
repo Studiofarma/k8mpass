@@ -1,19 +1,19 @@
 package namespace
 
-type NamespaceMessage interface {
+type Message interface {
 	isNamespaceMessage()
 }
 
 type AddedNamespaceMsg struct {
-	Namespace NamespaceItem
+	Namespace Item
 }
 
 type RemovedNamespaceMsg struct {
-	Namespace NamespaceItem
+	Namespace Item
 }
 
 type NamespaceListMsg struct {
-	Namespaces      []NamespaceItem
+	Namespaces      []Item
 	ResourceVersion string
 }
 
