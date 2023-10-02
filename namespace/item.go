@@ -13,7 +13,13 @@ import (
 
 type NamespaceItem struct {
 	K8sNamespace       v1.Namespace
-	ExtendedProperties map[string]string
+	ExtendedProperties []Property
+}
+
+type Property struct {
+	Key   string
+	Value string
+	Order int
 }
 
 func (n NamespaceItem) FilterValue() string {
@@ -21,7 +27,7 @@ func (n NamespaceItem) FilterValue() string {
 }
 
 func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
-	for _, p := range properties {
+	for idx, p := range properties {
 		fn := p.ExtendSingle
 		if fn == nil {
 			log.Println(fmt.Sprintf("Missing extention function for %s", p.Name), "namespace:", n.K8sNamespace.Name)
@@ -32,7 +38,7 @@ func (n *NamespaceItem) LoadCustomProperties(properties ...NamespaceExtension) {
 			log.Println(fmt.Sprintf("Error while computing extension %s", p.Name), "namespace:", n.K8sNamespace.Name)
 			continue
 		}
-		n.ExtendedProperties[p.Name] = string(value)
+		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.Name, Value: string(value), Order: idx})
 	}
 }
 
@@ -59,7 +65,7 @@ func (n NamespaceItemDelegate) Render(w io.Writer, m list.Model, index int, list
 	namespace := i.K8sNamespace.Name
 	customProperties := ""
 	for _, property := range i.ExtendedProperties {
-		customProperties += customPropertiesStyle.Render(property)
+		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
 	}
 	fn := unselectedItemStyle.Render
 	if index == m.Index() {

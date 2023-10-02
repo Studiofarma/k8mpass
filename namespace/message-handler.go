@@ -19,8 +19,8 @@ func (nh NamespaceMessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
 	item := event.Object.(*v1.Namespace)
 	namespace := NamespaceItem{
-		*item,
-		make(map[string]string),
+		K8sNamespace:       *item,
+		ExtendedProperties: make([]Property, 0),
 	}
 	switch event.Type {
 	case watch.Deleted:
@@ -62,8 +62,8 @@ func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.C
 				return ErrorMsg{err}
 			}
 			var namespaces []NamespaceItem
-			namespaceProperties := make(map[namespaceName]map[string]string)
-			for _, e := range nh.extensions {
+			namespaceProperties := make(map[namespaceName][]Property)
+			for idx, e := range nh.extensions {
 				fn := e.ExtendList
 				if fn == nil {
 					continue
@@ -71,9 +71,14 @@ func (nh *NamespaceMessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.C
 				nsToValue := fn(res.Items)
 				for ns, value := range nsToValue {
 					if namespaceProperties[namespaceName(ns)] == nil {
-						namespaceProperties[namespaceName(ns)] = make(map[string]string)
+						namespaceProperties[namespaceName(ns)] = make([]Property, 0)
 					}
-					namespaceProperties[namespaceName(ns)][e.Name] = string(value)
+					p := Property{
+						Key:   e.Name,
+						Value: string(value),
+						Order: idx,
+					}
+					namespaceProperties[namespaceName(ns)] = append(namespaceProperties[namespaceName(ns)], p)
 				}
 			}
 			for _, n := range res.Items {
