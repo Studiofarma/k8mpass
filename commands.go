@@ -62,7 +62,7 @@ var CheckSleepingStatusOperation = NamespaceOperation{
 	},
 }
 
-func CheckSleepingStatusCondition(cs *kubernetes.Clientset, namespace string) bool {
+func CheckSleepingStatusCondition(*kubernetes.Clientset, string) bool {
 	_, ok := os.LookupEnv("THANOS_URL")
 	return ok
 }

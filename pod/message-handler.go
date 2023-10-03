@@ -15,8 +15,8 @@ type MessageHandler struct {
 	service k8mpasskube.PodService
 }
 
-func (nh MessageHandler) NextEvent() tea.Msg {
-	event := nh.service.GetEvent()
+func (handler MessageHandler) NextEvent() tea.Msg {
+	event := handler.service.GetEvent()
 
 	switch event.Type {
 	case watch.Deleted:
@@ -52,9 +52,9 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 	}
 }
 
-func (nh *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Clientset, resourceVersion string, namespace string) tea.Cmd {
+func (handler *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Clientset, resourceVersion string, namespace string) tea.Cmd {
 	return func() tea.Msg {
-		err := nh.service.Subscribe(ctx, cs, resourceVersion, namespace)
+		err := handler.service.Subscribe(ctx, cs, resourceVersion, namespace)
 		if err != nil {
 			return ErrorMsg{err}
 		}
@@ -62,8 +62,8 @@ func (nh *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Clientse
 	}
 }
 
-func (nh *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset, namespace string) tea.Cmd {
-	res, err := nh.service.GetPods(ctx, cs, namespace)
+func (handler *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset, namespace string) tea.Cmd {
+	res, err := handler.service.GetPods(ctx, cs, namespace)
 	return tea.Sequence(
 		func() tea.Msg {
 			if err != nil {
@@ -73,17 +73,17 @@ func (nh *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset,
 			for _, n := range res.Items {
 				pods = append(pods, Item{K8sPod: n})
 			}
-			return PodListMsg{
+			return ListMsg{
 				Pods:            pods,
 				ResourceVersion: res.ResourceVersion,
 			}
 		},
-		nh.WatchPods(ctx, cs, res.ResourceVersion, namespace),
+		handler.WatchPods(ctx, cs, res.ResourceVersion, namespace),
 	)
 }
 
-func (h MessageHandler) StopWatching() {
-	h.service.Watcher.Stop()
+func (handler MessageHandler) StopWatching() {
+	handler.service.Watcher.Stop()
 }
 
 func NewHandler() *MessageHandler {

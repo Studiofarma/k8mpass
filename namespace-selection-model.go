@@ -21,9 +21,9 @@ func (n NamespaceSelectionModel) Init() tea.Cmd {
 func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case namespace.WatchingNamespacesMsg:
+	case namespace.WatchingMsg:
 		cmds = append(cmds, n.messageHandler.NextEvent)
-	case namespace.NamespaceListMsg:
+	case namespace.ListMsg:
 		items := make([]list.Item, len(msg.Namespaces))
 		for i, ns := range msg.Namespaces {
 			items[i] = ns
@@ -31,7 +31,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.namespaces.SetItems(items))
 		n.namespaces.StopSpinner()
 		n.namespaces.Title = "Select a namespace"
-	case namespace.AddedNamespaceMsg:
+	case namespace.AddedMsg:
 		cmds = append(cmds, n.namespaces.InsertItem(0, msg.Namespace))
 		ns := n.namespaces.Items()
 		sort.SliceStable(ns, func(i, j int) bool {
@@ -40,7 +40,7 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.namespaces.SetItems(ns))
 		cmds = append(cmds, n.messageHandler.NextEvent)
 		cmds = append(cmds, n.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
-	case namespace.RemovedNamespaceMsg:
+	case namespace.RemovedMsg:
 		var idx = namespace.FindNamespace(n.namespaces.Items(), msg.Namespace)
 		n.namespaces.RemoveItem(idx)
 		cmds = append(cmds, n.messageHandler.NextEvent)

@@ -52,7 +52,7 @@ func (n ItemDelegate) Spacing() int {
 	return 0
 }
 
-func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (n ItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		}
 	}
 
-	fmt.Fprint(w, fn(namespace)+customProperties)
+	_, _ = fmt.Fprint(w, fn(namespace)+customProperties)
 }
 
 func FindNamespace(items []list.Item, search Item) int {

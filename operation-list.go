@@ -52,7 +52,7 @@ func (o OperationItemDelegate) Render(w io.Writer, m list.Model, index int, list
 		}
 	}
 
-	fmt.Fprint(w, fn(str))
+	_, _ = fmt.Fprint(w, fn(str))
 }
 
 func (o OperationItemDelegate) Height() int {
@@ -63,7 +63,7 @@ func (o OperationItemDelegate) Spacing() int {
 	return 0
 }
 
-func (o OperationItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (o OperationItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 	return nil
 }
 

@@ -31,7 +31,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case pod.WatchingPodsMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
-	case pod.PodListMsg:
+	case pod.ListMsg:
 		items := make([]list.Item, len(msg.Pods))
 		for i, ns := range msg.Pods {
 			items[i] = ns
@@ -112,12 +112,12 @@ func (m PodSelectionModel) View() string {
 	)
 }
 
-func (o *PodSelectionModel) Reset() {
-	o.operations.ResetSelected()
-	o.pods.ResetSelected()
-	o.operations.SetItems(make([]list.Item, 0))
-	o.pods.SetItems(make([]list.Item, 0))
-	o.messageHandler.StopWatching()
+func (m *PodSelectionModel) Reset() {
+	m.operations.ResetSelected()
+	m.pods.ResetSelected()
+	m.operations.SetItems(make([]list.Item, 0))
+	m.pods.SetItems(make([]list.Item, 0))
+	m.messageHandler.StopWatching()
 }
 
 func (m *PodSelectionModel) UpdateSize() {

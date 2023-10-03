@@ -28,13 +28,13 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 	switch event.Type {
 	case watch.Deleted:
 		log.Printf("Deleted namespace: %s ", item.Name)
-		return RemovedNamespaceMsg{
+		return RemovedMsg{
 			Namespace: namespace,
 		}
 	case watch.Added:
 		namespace.LoadCustomProperties(nh.extensions...)
 		log.Printf("Added namespace: %s ", item.Name)
-		return AddedNamespaceMsg{
+		return AddedMsg{
 			Namespace: namespace,
 		}
 	default:
@@ -48,7 +48,7 @@ func (nh *MessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVers
 		if err != nil {
 			return ErrorMsg{err}
 		}
-		return WatchingNamespacesMsg{}
+		return WatchingMsg{}
 	}
 }
 
@@ -84,7 +84,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 			for _, n := range res.Items {
 				namespaces = append(namespaces, Item{n, namespaceProperties[namespaceName(n.Name)]})
 			}
-			return NamespaceListMsg{
+			return ListMsg{
 				Namespaces:      namespaces,
 				ResourceVersion: res.ResourceVersion,
 			}

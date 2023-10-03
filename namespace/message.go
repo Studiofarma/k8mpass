@@ -4,29 +4,29 @@ type Message interface {
 	isNamespaceMessage()
 }
 
-type AddedNamespaceMsg struct {
+type AddedMsg struct {
 	Namespace Item
 }
 
-type RemovedNamespaceMsg struct {
+type RemovedMsg struct {
 	Namespace Item
 }
 
-type NamespaceListMsg struct {
+type ListMsg struct {
 	Namespaces      []Item
 	ResourceVersion string
 }
 
 type NextEventMsg struct{}
 
-type WatchingNamespacesMsg struct{}
+type WatchingMsg struct{}
 
 type ErrorMsg struct {
 	Err error
 }
 
-func (m AddedNamespaceMsg) isNamespaceMessage()     {}
-func (m RemovedNamespaceMsg) isNamespaceMessage()   {}
-func (m WatchingNamespacesMsg) isNamespaceMessage() {}
-func (m NextEventMsg) isNamespaceMessage()          {}
-func (m ErrorMsg) isNamespaceMessage()              {}
+func (m AddedMsg) isNamespaceMessage()     {}
+func (m RemovedMsg) isNamespaceMessage()   {}
+func (m WatchingMsg) isNamespaceMessage()  {}
+func (m NextEventMsg) isNamespaceMessage() {}
+func (m ErrorMsg) isNamespaceMessage()     {}

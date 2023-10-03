@@ -19,15 +19,15 @@ type ExtensionValue string
 type ExtendSingleFunc func(ns v1.Namespace) (ExtensionValue, error)
 type ExtendListFunc func(ns []v1.Namespace) map[Name]ExtensionValue
 
-func NamespaceAge(ns v1.Namespace) (ExtensionValue, error) {
+func Age(ns v1.Namespace) (ExtensionValue, error) {
 	res := fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
 	return ExtensionValue(res), nil
 }
 
-func NamespaceAgeList(ns []v1.Namespace) map[Name]ExtensionValue {
+func AgeList(ns []v1.Namespace) map[Name]ExtensionValue {
 	values := make(map[Name]ExtensionValue)
 	for _, n := range ns {
-		age, _ := NamespaceAge(n)
+		age, _ := Age(n)
 		values[Name(n.Name)] = age
 	}
 	return values
@@ -35,6 +35,6 @@ func NamespaceAgeList(ns []v1.Namespace) map[Name]ExtensionValue {
 
 var AgeProperty = Extension{
 	Name:         "age",
-	ExtendSingle: NamespaceAge,
-	ExtendList:   NamespaceAgeList,
+	ExtendSingle: Age,
+	ExtendList:   AgeList,
 }

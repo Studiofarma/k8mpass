@@ -16,7 +16,7 @@ type ModifiedPodMsg struct {
 	Pod Item
 }
 
-type PodListMsg struct {
+type ListMsg struct {
 	Pods            []Item
 	ResourceVersion string
 }

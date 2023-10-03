@@ -34,7 +34,7 @@ func (n ItemDelegate) Spacing() int {
 	return 0
 }
 
-func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+func (n ItemDelegate) Update(_ tea.Msg, m *list.Model) tea.Cmd {
 	if len(m.Items()) == 0 {
 		m.SetShowStatusBar(false)
 	} else {
@@ -43,12 +43,12 @@ func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
-func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+func (n ItemDelegate) Render(w io.Writer, _ list.Model, _ int, listItem list.Item) {
 	i, ok := listItem.(Item)
 	if !ok {
 		return
 	}
-	fmt.Fprintf(w, "  %s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)))
+	_, _ = fmt.Fprintf(w, "  %s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)))
 }
 
 func FindPod(items []list.Item, search Item) int {
