@@ -39,15 +39,14 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Pod.K8sPod.Name)))
 	case pod.RemovedPodMsg:
-		var idx = -1
-		for i, v := range m.pods.Items() {
-			if v.FilterValue() == msg.Pod.FilterValue() {
-				idx = i
-			}
-		}
+		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
 		m.pods.RemoveItem(idx)
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Pod.K8sPod.Name)))
+	case pod.ModifiedPodMsg:
+		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
+		m.pods.SetItem(idx, msg.Pod)
+		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.NextEventMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.ErrorMsg:

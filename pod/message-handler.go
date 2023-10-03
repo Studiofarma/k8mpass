@@ -33,8 +33,14 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 		log.Printf("Added pod: %s ", item.Name)
 		return AddedPodMsg{
 			Pod: Item{
-				K8sPod:             *item,
-				ExtendedProperties: make([]Property, 0),
+				K8sPod: *item,
+			},
+		}
+	case watch.Modified:
+		item := event.Object.(*v1.Pod)
+		return ModifiedPodMsg{
+			Pod: Item{
+				K8sPod: *item,
 			},
 		}
 	case watch.Error, "":

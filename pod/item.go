@@ -45,3 +45,15 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 	fmt.Fprintf(w, "  %s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)))
 }
+
+func FindPod(items []list.Item, search Item) int {
+	var idx = -1
+	for i, item := range items {
+		if pod, ok := item.(Item); ok {
+			if pod.K8sPod.Name == search.K8sPod.Name {
+				idx = i
+			}
+		}
+	}
+	return idx
+}

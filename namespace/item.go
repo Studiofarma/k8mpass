@@ -76,3 +76,15 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	fmt.Fprint(w, fn(namespace)+customProperties)
 }
+
+func FindNamespace(items []list.Item, search Item) int {
+	var idx = -1
+	for i, item := range items {
+		if ns, ok := item.(Item); ok {
+			if ns.K8sNamespace.Name == search.K8sNamespace.Name {
+				idx = i
+			}
+		}
+	}
+	return idx
+}
