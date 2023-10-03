@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/studiofarma/k8mpass/pod"
 	"runtime"
 	"time"
+
+	"github.com/studiofarma/k8mpass/pod"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,7 +18,6 @@ type K8mpassModel struct {
 	namespaceModel NamespaceSelectionModel
 	operationModel OperationModel
 	podModel       PodSelectionModel
-	ctx            *context.Context
 }
 
 type modelState int32
@@ -68,6 +68,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		case "s":
+			m.podModel.messageHandler.StopWatching()
+
 		}
 	case tea.WindowSizeMsg:
 		var correction int
@@ -93,6 +96,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
 		m.operationModel.Reset()
+		m.podModel.messageHandler.StopWatching()
 	case backToOperationSelectionMsg:
 		m.state = OperationSelection
 		m.operationModel.Reset()
@@ -103,6 +107,10 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
 		cmds = append(cmds, nmCmd)
+	case pod.Message:
+		pm, pmCmd := m.podModel.Update(msg)
+		m.podModel = pm
+		cmds = append(cmds, pmCmd)
 	}
 
 	switch m.state {
@@ -118,6 +126,9 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.operationModel = om
 		cmds = append(cmds, omCmd)
 	case PodSelection:
+		if _, ok := msg.(pod.Message); ok {
+			break
+		}
 		pm, pmCmd := m.podModel.Update(msg)
 		m.podModel = pm
 		cmds = append(cmds, pmCmd)

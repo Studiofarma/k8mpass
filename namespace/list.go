@@ -1,14 +1,8 @@
 package namespace
 
 import (
-	"strings"
-
 	"github.com/charmbracelet/bubbles/list"
 )
-
-func (n Item) IsReviewApp() bool {
-	return strings.HasPrefix(n.K8sNamespace.Name, "review")
-}
 
 func New() list.Model {
 	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)

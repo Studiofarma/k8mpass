@@ -43,16 +43,13 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 }
 
 func (nh *MessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVersion string) tea.Cmd {
-	return tea.Sequence(
-		func() tea.Msg {
-			err := nh.service.Subscribe(cs, resourceVersion)
-			if err != nil {
-				return ErrorMsg{err}
-			}
-			return WatchingNamespacesMsg{}
-		},
-		nh.NextEvent,
-	)
+	return func() tea.Msg {
+		err := nh.service.Subscribe(cs, resourceVersion)
+		if err != nil {
+			return ErrorMsg{err}
+		}
+		return WatchingNamespacesMsg{}
+	}
 }
 
 type namespaceName string

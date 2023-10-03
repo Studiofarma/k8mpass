@@ -17,43 +17,43 @@ type MessageHandler struct {
 
 func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
-	item := event.Object.(*v1.Pod)
-	pod := Item{
-		K8sPod:             *item,
-		ExtendedProperties: make([]Property, 0),
-	}
+
 	switch event.Type {
 	case watch.Deleted:
+		item := event.Object.(*v1.Pod)
 		log.Printf("Deleted pod: %s ", item.Name)
 		return RemovedPodMsg{
-			Pod: pod,
+			Pod: Item{
+				K8sPod:             *item,
+				ExtendedProperties: make([]Property, 0),
+			},
 		}
 	case watch.Added:
+		item := event.Object.(*v1.Pod)
 		log.Printf("Added pod: %s ", item.Name)
 		return AddedPodMsg{
-			Pod: pod,
+			Pod: Item{
+				K8sPod:             *item,
+				ExtendedProperties: make([]Property, 0),
+			},
 		}
-	case watch.Modified:
-		log.Printf("Modified pod: %s ", item.Name)
-		return AddedPodMsg{
-			Pod: pod,
-		}
+	case watch.Error, "":
+		log.Printf("Error event for pods")
+		return nil
 	default:
+		log.Printf("Event not handled")
 		return NextEventMsg{}
 	}
 }
 
 func (nh *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Clientset, resourceVersion string, namespace string) tea.Cmd {
-	return tea.Sequence(
-		func() tea.Msg {
-			err := nh.service.Subscribe(ctx, cs, resourceVersion, namespace)
-			if err != nil {
-				return ErrorMsg{err}
-			}
-			return WatchingPodsMsg{}
-		},
-		nh.NextEvent,
-	)
+	return func() tea.Msg {
+		err := nh.service.Subscribe(ctx, cs, resourceVersion, namespace)
+		if err != nil {
+			return ErrorMsg{err}
+		}
+		return WatchingPodsMsg{}
+	}
 }
 
 func (nh *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset, namespace string) tea.Cmd {
@@ -74,6 +74,10 @@ func (nh *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset,
 		},
 		nh.WatchPods(ctx, cs, res.ResourceVersion, namespace),
 	)
+}
+
+func (h MessageHandler) StopWatching() {
+	h.service.Watcher.Stop()
 }
 
 func NewHandler() *MessageHandler {

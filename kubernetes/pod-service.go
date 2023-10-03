@@ -2,15 +2,16 @@ package kubernetes
 
 import (
 	"context"
+	"log"
+
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"log"
 )
 
 type PodService struct {
-	Events <-chan watch.Event
+	Watcher watch.Interface
 }
 
 func (s PodService) GetPods(ctx context.Context, cs *kubernetes.Clientset, namespace string) (*v1.PodList, error) {
@@ -29,12 +30,13 @@ func (s *PodService) Subscribe(ctx context.Context, cs *kubernetes.Clientset, re
 	if err != nil {
 		return err
 	}
-	s.Events = watcher.ResultChan()
+	s.Watcher = watcher
+	log.Println("Watcher added")
 	return nil
 }
 
-func (s PodService) GetEvent() watch.Event {
-	event := <-s.Events
+func (s *PodService) GetEvent() watch.Event {
+	event := <-s.Watcher.ResultChan()
 	log.Println("Received pod event of type ", event.Type)
 	return event
 }

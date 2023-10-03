@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/studiofarma/k8mpass/pod"
-	"sort"
 )
 
 type PodSelectionModel struct {
@@ -20,6 +21,8 @@ func (m PodSelectionModel) Init() tea.Cmd {
 func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case pod.WatchingPodsMsg:
+		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.PodListMsg:
 		items := make([]list.Item, len(msg.Pods))
 		for i, ns := range msg.Pods {

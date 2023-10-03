@@ -2,9 +2,10 @@ package pod
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"io"
 	v1 "k8s.io/api/core/v1"
 )
 
