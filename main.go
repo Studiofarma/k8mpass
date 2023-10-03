@@ -33,9 +33,12 @@ func main() {
 }
 
 func loadPlugins() ([]api.IExtension, []api.INamespaceOperation) {
-	// load module
-	// 1. open the so file to load the symbols
-	plug, err := plugin.Open("plugins/extensions.so")
+	args := os.Args
+	if len(args) < 3 {
+		return make([]api.IExtension, 0), make([]api.INamespaceOperation, 0)
+	}
+	pluginPath := os.Args[2]
+	plug, err := plugin.Open(pluginPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
