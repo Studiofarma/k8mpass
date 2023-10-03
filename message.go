@@ -10,11 +10,6 @@ type clusterConnectedMsg struct {
 	clientset *kubernetes.Clientset
 }
 
-type noOutputResultMsg struct {
-	success bool
-	message string
-}
-
 type startupMsg struct{}
 
 type namespaceSelectedMsg struct {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/studiofarma/k8mpass/api"
 	"io"
 	"strings"
 	"time"
@@ -29,11 +30,11 @@ var (
 )
 
 type OperationItemDelegate struct {
-	NamespaceOperation NamespaceOperation
+	NamespaceOperation api.NamespaceOperation
 }
 
 func (o OperationItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(NamespaceOperation)
+	i, ok := listItem.(api.NamespaceOperation)
 	if !ok {
 		return
 	}
@@ -65,10 +66,6 @@ func (o OperationItemDelegate) Spacing() int {
 
 func (o OperationItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 	return nil
-}
-
-func (no NamespaceOperation) FilterValue() string {
-	return no.Name
 }
 
 func initializeOperationList() list.Model {

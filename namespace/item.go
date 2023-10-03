@@ -2,6 +2,7 @@ package namespace
 
 import (
 	"fmt"
+	"github.com/studiofarma/k8mpass/api"
 	"io"
 	"log"
 	"strings"
@@ -26,7 +27,7 @@ func (n Item) FilterValue() string {
 	return n.K8sNamespace.Name
 }
 
-func (n *Item) LoadCustomProperties(properties ...Extension) {
+func (n *Item) LoadCustomProperties(properties ...api.Extension) {
 	for idx, p := range properties {
 		fn := p.ExtendSingle
 		if fn == nil {

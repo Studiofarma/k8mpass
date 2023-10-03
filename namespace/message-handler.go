@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"github.com/studiofarma/k8mpass/api"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,7 +13,7 @@ import (
 
 type MessageHandler struct {
 	service    k8mpasskube.NamespaceService
-	extensions []Extension
+	extensions []api.Extension
 }
 
 func (nh MessageHandler) NextEvent() tea.Msg {
@@ -93,7 +94,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 	)
 }
 
-func NewHandler(exts ...Extension) *MessageHandler {
+func NewHandler(exts ...api.Extension) *MessageHandler {
 	return &MessageHandler{
 		service:    k8mpasskube.NamespaceService{},
 		extensions: exts,

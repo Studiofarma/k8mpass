@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/studiofarma/k8mpass/api"
 	"log"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -23,25 +23,16 @@ func clusterConnect() tea.Msg {
 	return clusterConnectedMsg{cs}
 }
 
-type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
-type K8mpassCondition func(cs *kubernetes.Clientset, namespace string) bool
-
-type NamespaceOperation struct {
-	Name      string
-	Command   K8mpassCommand
-	Condition K8mpassCondition
-}
-
-var WakeUpReviewOperation = NamespaceOperation{
+var WakeUpReviewOperation = api.NamespaceOperation{
 	Name:      "Wake up review app",
 	Condition: WakeUpReviewCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
 			err := wakeupReview(clientset, namespace)
 			if err != nil {
-				return noOutputResultMsg{false, err.Error()}
+				return api.NoOutputResultMsg{false, err.Error()}
 			}
-			return noOutputResultMsg{true, "We woke it up!"}
+			return api.NoOutputResultMsg{true, "We woke it up!"}
 		}
 	},
 }
@@ -54,20 +45,7 @@ func WakeUpReviewCondition(cs *kubernetes.Clientset, namespace string) bool {
 	return true
 }
 
-var CheckSleepingStatusOperation = NamespaceOperation{
-	Name:      "Check if review app is asleep",
-	Condition: CheckSleepingStatusCondition,
-	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
-		return checkIfReviewAppIsAsleep(namespace)
-	},
-}
-
-func CheckSleepingStatusCondition(*kubernetes.Clientset, string) bool {
-	_, ok := os.LookupEnv("THANOS_URL")
-	return ok
-}
-
-var OpenDbmsOperation = NamespaceOperation{
+var OpenDbmsOperation = api.NamespaceOperation{
 	Name:      "Open DBMS in browser",
 	Condition: OpenDbmsCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
@@ -75,7 +53,7 @@ var OpenDbmsOperation = NamespaceOperation{
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 
 			if err != nil {
-				return noOutputResultMsg{false, err.Error()}
+				return api.NoOutputResultMsg{false, err.Error()}
 			}
 
 			var dbmsUrl string
@@ -87,11 +65,11 @@ var OpenDbmsOperation = NamespaceOperation{
 				}
 			}
 			if dbmsUrl == "" {
-				return noOutputResultMsg{false, "Ingress not found"}
+				return api.NoOutputResultMsg{false, "Ingress not found"}
 			}
 			Openbrowser("https://" + dbmsUrl)
 
-			return noOutputResultMsg{
+			return api.NoOutputResultMsg{
 				true,
 				"DBeaver is better 🦦",
 			}
@@ -112,7 +90,7 @@ func OpenDbmsCondition(cs *kubernetes.Clientset, namespace string) bool {
 	return res
 }
 
-var OpenApplicationOperation = NamespaceOperation{
+var OpenApplicationOperation = api.NamespaceOperation{
 	Name:      "Open application in browser",
 	Condition: OpenApplicationCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
@@ -120,7 +98,7 @@ var OpenApplicationOperation = NamespaceOperation{
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
 
 			if err != nil {
-				return noOutputResultMsg{false, err.Error()}
+				return api.NoOutputResultMsg{false, err.Error()}
 			}
 
 			var dbmsUrl string
@@ -131,11 +109,11 @@ var OpenApplicationOperation = NamespaceOperation{
 				}
 			}
 			if dbmsUrl == "" {
-				return noOutputResultMsg{false, "Ingress not found"}
+				return api.NoOutputResultMsg{false, "Ingress not found"}
 			}
 			Openbrowser("https://" + dbmsUrl)
 
-			return noOutputResultMsg{true, "App is ready"}
+			return api.NoOutputResultMsg{true, "App is ready"}
 		}
 	},
 }
@@ -171,9 +149,9 @@ func Openbrowser(url string) {
 	}
 
 }
-func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operations []NamespaceOperation) tea.Cmd {
+func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operations []api.NamespaceOperation) tea.Cmd {
 	return func() tea.Msg {
-		var availableOps []NamespaceOperation
+		var availableOps []api.NamespaceOperation
 		for _, operation := range operations {
 			if operation.Condition == nil {
 				continue
@@ -182,10 +160,6 @@ func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operat
 				availableOps = append(availableOps, operation)
 			}
 		}
-		return AvailableOperationsMsg{availableOps}
+		return api.AvailableOperationsMsg{availableOps}
 	}
-}
-
-type AvailableOperationsMsg struct {
-	operations []NamespaceOperation
 }

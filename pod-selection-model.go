@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/studiofarma/k8mpass/api"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -12,7 +13,7 @@ import (
 
 type PodSelectionModel struct {
 	messageHandler      *pod.MessageHandler
-	availableOperations []NamespaceOperation
+	availableOperations []api.NamespaceOperation
 	pods                list.Model
 	operations          list.Model
 	namespace           string
@@ -59,27 +60,27 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.ErrorMsg:
 		m.pods.NewStatusMessage(msg.Err.Error())
-	case AvailableOperationsMsg:
+	case api.AvailableOperationsMsg:
 		var ops []list.Item
-		for _, operation := range msg.operations {
+		for _, operation := range msg.Operations {
 			ops = append(ops, operation)
 		}
 		cmd := m.operations.SetItems(ops)
 		m.UpdateSize()
 		cmds = append(cmds, cmd)
-	case noOutputResultMsg:
+	case api.NoOutputResultMsg:
 		var style lipgloss.Style
-		if msg.success {
+		if msg.Success {
 			style = statusMessageGreen
 		} else {
 			style = statusMessageRed
 		}
-		cmd := m.operations.NewStatusMessage(style.Render(msg.message))
+		cmd := m.operations.NewStatusMessage(style.Render(msg.Message))
 		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			i, ok := m.operations.SelectedItem().(NamespaceOperation)
+			i, ok := m.operations.SelectedItem().(api.NamespaceOperation)
 			if ok {
 				opCommand := i.Command(K8sCluster.kubernetes, m.namespace)
 				cmds = append(cmds, opCommand)

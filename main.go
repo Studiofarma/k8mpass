@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	_ = os.Remove("debug/debug.log")
-	_, _ = tea.LogToFile("debug/debug.log", "DEBUG")
+	_ = os.Remove("debug/k8s_debug.log")
+	_, _ = tea.LogToFile("debug/k8s_debug.log", "DEBUG")
 	if err := godotenv.Load(".env"); err != nil {
 		log.Println("Failed to load .env")
 	} else {

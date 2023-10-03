@@ -1,14 +1,15 @@
-package main
+package extensions
 
 import (
 	"encoding/json"
 	"errors"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/studiofarma/k8mpass/api"
+	"k8s.io/client-go/kubernetes"
 	"net/http"
 	"os"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/studiofarma/k8mpass/namespace"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -17,7 +18,15 @@ const (
 	awake    = "Awake!"
 )
 
-var ReviewAppSleepStatus = namespace.Extension{
+var NamespaceOperations = []api.NamespaceOperation{
+	CheckSleepingStatusOperation,
+}
+
+var NamespaceExtensions = []api.Extension{
+	ReviewAppSleepStatus,
+}
+
+var ReviewAppSleepStatus = api.Extension{
 	Name:         "sleeping",
 	ExtendSingle: IsReviewAppSleeping,
 	ExtendList:   AreReviewAppsSleeping,
@@ -98,7 +107,7 @@ func (r ThanosResponse) Status() string {
 	}
 }
 
-func IsReviewAppSleeping(ns v1.Namespace) (namespace.ExtensionValue, error) {
+func IsReviewAppSleeping(ns v1.Namespace) (api.ExtensionValue, error) {
 	if !IsReviewApp(ns.Name) {
 		return "", nil
 	}
@@ -127,34 +136,9 @@ func IsReviewAppSleeping(ns v1.Namespace) (namespace.ExtensionValue, error) {
 	if err != nil {
 		return "", err
 	}
-	return namespace.ExtensionValue(thResponse.Status()), nil
+	return api.ExtensionValue(thResponse.Status()), nil
 }
-
-func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
-	return func() tea.Msg {
-		client := &http.Client{}
-		req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
-		if err != nil {
-			return noOutputResultMsg{false, err.Error()}
-		}
-		q := req.URL.Query()
-		query := os.Getenv("THANOS_QUERY")
-		q.Add("query", strings.Replace(query, "%NS%", namespace, 1))
-		req.URL.RawQuery = q.Encode()
-		resp, err := client.Do(req)
-		if err != nil {
-			return noOutputResultMsg{false, err.Error()}
-		}
-		var thResponse ThanosResponse
-		err = json.NewDecoder(resp.Body).Decode(&thResponse)
-		if err != nil {
-			return noOutputResultMsg{false, err.Error()}
-		}
-		return noOutputResultMsg{true, thResponse.Status()}
-	}
-}
-
-func AreReviewAppsSleeping(ns []v1.Namespace) map[namespace.Name]namespace.ExtensionValue {
+func AreReviewAppsSleeping(ns []v1.Namespace) map[api.Name]api.ExtensionValue {
 	thanosUrl, isPresent := os.LookupEnv("THANOS_URL")
 	if !isPresent {
 		return nil
@@ -180,10 +164,47 @@ func AreReviewAppsSleeping(ns []v1.Namespace) map[namespace.Name]namespace.Exten
 	if err != nil {
 		return nil
 	}
-	values := make(map[namespace.Name]namespace.ExtensionValue, len(ns))
+	values := make(map[api.Name]api.ExtensionValue, len(ns))
 	for _, n := range ns {
-		values[namespace.Name(n.Name)] = namespace.ExtensionValue(thResponse.StatusByNamespace(n.Name))
+		values[api.Name(n.Name)] = api.ExtensionValue(thResponse.StatusByNamespace(n.Name))
 	}
 
 	return values
+}
+
+var CheckSleepingStatusOperation = api.NamespaceOperation{
+	Name:      "Check if review app is asleep",
+	Condition: CheckSleepingStatusCondition,
+	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
+		return checkIfReviewAppIsAsleep(namespace)
+	},
+}
+
+func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
+	return func() tea.Msg {
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", os.Getenv("THANOS_URL")+"/api/v1/query", nil)
+		if err != nil {
+			return api.NoOutputResultMsg{Message: err.Error()}
+		}
+		q := req.URL.Query()
+		query := os.Getenv("THANOS_QUERY")
+		q.Add("query", strings.Replace(query, "%NS%", namespace, 1))
+		req.URL.RawQuery = q.Encode()
+		resp, err := client.Do(req)
+		if err != nil {
+			return api.NoOutputResultMsg{Message: err.Error()}
+		}
+		var thResponse ThanosResponse
+		err = json.NewDecoder(resp.Body).Decode(&thResponse)
+		if err != nil {
+			return api.NoOutputResultMsg{Message: err.Error()}
+		}
+		return api.NoOutputResultMsg{Success: true, Message: thResponse.Status()}
+	}
+}
+
+func CheckSleepingStatusCondition(*kubernetes.Clientset, string) bool {
+	_, ok := os.LookupEnv("THANOS_URL")
+	return ok
 }
