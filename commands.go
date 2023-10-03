@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -25,14 +24,17 @@ func clusterConnect() tea.Msg {
 }
 
 type K8mpassCommand func(model *kubernetes.Clientset, namespace string) tea.Cmd
+type K8mpassCondition func(cs *kubernetes.Clientset, namespace string) bool
 
 type NamespaceOperation struct {
-	Name    string
-	Command K8mpassCommand
+	Name      string
+	Command   K8mpassCommand
+	Condition K8mpassCondition
 }
 
 var WakeUpReviewOperation = NamespaceOperation{
-	Name: "Wake up review app",
+	Name:      "Wake up review app",
+	Condition: WakeUpReviewCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
 			err := wakeupReview(clientset, namespace)
@@ -43,36 +45,31 @@ var WakeUpReviewOperation = NamespaceOperation{
 		}
 	},
 }
+
+func WakeUpReviewCondition(cs *kubernetes.Clientset, namespace string) bool {
+	_, err := cs.BatchV1().CronJobs(namespace).Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 var CheckSleepingStatusOperation = NamespaceOperation{
-	Name: "Check if review app is asleep",
+	Name:      "Check if review app is asleep",
+	Condition: CheckSleepingStatusCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return checkIfReviewAppIsAsleep(namespace)
 	},
 }
 
-var PodsOperation = NamespaceOperation{
-	Name: "Get list of pods",
-	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
-		return func() tea.Msg {
-			p, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-			if err != nil {
-				return errMsg(err)
-			}
-			s := ""
-			for _, pod := range p.Items {
-
-				if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
-					continue
-				}
-				s += fmt.Sprintf("  %s\n", styleString(pod.Name, podStyle(pod.Status)))
-			}
-			return operationResultMsg{body: s}
-		}
-	},
+func CheckSleepingStatusCondition(cs *kubernetes.Clientset, namespace string) bool {
+	_, ok := os.LookupEnv("THANOS_URL")
+	return ok
 }
 
 var OpenDbmsOperation = NamespaceOperation{
-	Name: "Open DBMS in browser",
+	Name:      "Open DBMS in browser",
+	Condition: OpenDbmsCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -102,8 +99,22 @@ var OpenDbmsOperation = NamespaceOperation{
 	},
 }
 
+func OpenDbmsCondition(cs *kubernetes.Clientset, namespace string) bool {
+	ingresses, err := cs.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false
+	}
+	res := false
+	for _, i := range ingresses.Items {
+		host := i.Spec.Rules[0].Host
+		res = res || strings.HasPrefix(host, "dbms")
+	}
+	return res
+}
+
 var OpenApplicationOperation = NamespaceOperation{
-	Name: "Open application in browser",
+	Name:      "Open application in browser",
+	Condition: OpenApplicationCondition,
 	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
 		return func() tea.Msg {
 			ingresses, err := clientset.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
@@ -129,6 +140,19 @@ var OpenApplicationOperation = NamespaceOperation{
 	},
 }
 
+func OpenApplicationCondition(cs *kubernetes.Clientset, namespace string) bool {
+	ingresses, err := cs.NetworkingV1().Ingresses(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false
+	}
+	res := false
+	for _, i := range ingresses.Items {
+		host := i.Spec.Rules[0].Host
+		res = res || strings.HasPrefix(host, "g3pharmacy")
+	}
+	return res
+}
+
 func Openbrowser(url string) {
 	var err error
 
@@ -147,31 +171,21 @@ func Openbrowser(url string) {
 	}
 
 }
-
-func styleString(s string, style lipgloss.Style) lipgloss.Style {
-	return style.SetString(s)
+func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operations []NamespaceOperation) tea.Cmd {
+	return func() tea.Msg {
+		var availableOps []NamespaceOperation
+		for _, operation := range operations {
+			if operation.Condition == nil {
+				continue
+			}
+			if operation.Condition(cs, namespace) {
+				availableOps = append(availableOps, operation)
+			}
+		}
+		return AvailableOperationsMsg{availableOps}
+	}
 }
 
-func podStyle(status v1.PodStatus) lipgloss.Style {
-
-	switch status.Phase {
-	case v1.PodRunning:
-		var ready = true
-		for _, c := range status.ContainerStatuses {
-			ready = ready && c.Ready
-		}
-		if !ready {
-			return lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#ff6666"))
-		}
-		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#66ffc2"))
-	case v1.PodFailed, v1.PodPending:
-		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ff6666"))
-	default:
-		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#a6a6a6"))
-	}
-
+type AvailableOperationsMsg struct {
+	operations []NamespaceOperation
 }

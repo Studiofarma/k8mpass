@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	pageHeight = 20
+	pageHeight = 8
 	pageWidth  = 80
 )
 
@@ -40,10 +40,15 @@ func (o OperationItemDelegate) Render(w io.Writer, m list.Model, index int, list
 
 	str := i.Name
 
-	fn := lipgloss.NewStyle().PaddingLeft(4).Render
+	fn := lipgloss.NewStyle().PaddingLeft(2).Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#ffcb78")).Render("> " + strings.Join(s, " "))
+			return lipgloss.
+				NewStyle().
+				MarginLeft(2).
+				Foreground(lipgloss.Color("#ffcb78")).
+				Background(lipgloss.Color("#444852")).
+				Render("" + strings.Join(s, " "))
 		}
 	}
 
@@ -66,15 +71,12 @@ func (no NamespaceOperation) FilterValue() string {
 	return no.Name
 }
 
-func initializeOperationList(ops []NamespaceOperation) list.Model {
+func initializeOperationList() list.Model {
 	var items []list.Item
-	for _, op := range ops {
-		items = append(items, op)
-	}
 	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
-	//l.Title = "Select an operation on"
+	l.Title = "Namespace operations"
 	l.SetShowStatusBar(false)
-	l.SetShowHelp(true)
+	l.SetShowHelp(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowFilter(false)
 	l.Styles.Title = titleStyle

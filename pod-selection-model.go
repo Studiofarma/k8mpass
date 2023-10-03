@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/lipgloss"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -10,12 +11,15 @@ import (
 )
 
 type PodSelectionModel struct {
-	messageHandler *pod.MessageHandler
-	pods           list.Model
+	messageHandler      *pod.MessageHandler
+	availableOperations []NamespaceOperation
+	pods                list.Model
+	operations          list.Model
+	namespace           string
 }
 
 func (m PodSelectionModel) Init() tea.Cmd {
-	return nil
+	return CheckConditionsThatApply(K8sCluster.kubernetes, m.namespace, m.availableOperations)
 }
 
 func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
@@ -51,8 +55,32 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.ErrorMsg:
 		m.pods.NewStatusMessage(msg.Err.Error())
+	case AvailableOperationsMsg:
+		var ops []list.Item
+		for _, operation := range msg.operations {
+			ops = append(ops, operation)
+		}
+		cmd := m.operations.SetItems(ops)
+		cmds = append(cmds, cmd)
+	case noOutputResultMsg:
+		var style lipgloss.Style
+		if msg.success {
+			style = statusMessageGreen
+		} else {
+			style = statusMessageRed
+		}
+		cmd := m.operations.NewStatusMessage(style.Render(msg.message))
+		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
+		case "enter":
+			i, ok := m.operations.SelectedItem().(NamespaceOperation)
+			if ok {
+				opCommand := i.Command(K8sCluster.kubernetes, m.namespace)
+				cmds = append(cmds, opCommand)
+			} else {
+				panic("Casting went wrong")
+			}
 		case "backspace", "esc":
 			m.pods.NewStatusMessage("")
 			cmds = append(cmds, func() tea.Msg {
@@ -64,10 +92,22 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	lm, lmCmd := m.pods.Update(msg)
 	m.pods = lm
 	cmds = append(cmds, lmCmd)
+	om, omCmd := m.operations.Update(msg)
+	m.operations = om
+	cmds = append(cmds, omCmd)
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m PodSelectionModel) View() string {
-	return m.pods.View()
+	return lipgloss.JoinVertical(
+		0.0,
+		m.operations.View(),
+		m.pods.View(),
+	)
+}
+
+func (o *PodSelectionModel) Reset() {
+	o.operations.ResetSelected()
+	o.pods.ResetSelected()
 }

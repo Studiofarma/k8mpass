@@ -16,7 +16,6 @@ type K8mpassModel struct {
 	error          errMsg
 	state          modelState
 	namespaceModel NamespaceSelectionModel
-	operationModel OperationModel
 	podModel       PodSelectionModel
 }
 
@@ -24,14 +23,13 @@ type modelState int32
 
 const (
 	NamespaceSelection modelState = 1
-	OperationSelection modelState = 2
 	PodSelection       modelState = 3
 )
 
 func initialModel() K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []NamespaceOperation{CheckSleepingStatusOperation, WakeUpReviewOperation, PodsOperation, OpenDbmsOperation, OpenApplicationOperation}
+	ops := []NamespaceOperation{CheckSleepingStatusOperation, WakeUpReviewOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
@@ -41,13 +39,11 @@ func initialModel() K8mpassModel {
 				ReviewAppSleepStatus,
 			),
 		},
-		operationModel: OperationModel{
-			operations: initializeOperationList(ops),
-			helpFooter: initializeHelpFooter(),
-		},
 		podModel: PodSelectionModel{
-			pods:           pod.New(),
-			messageHandler: pod.NewHandler(),
+			pods:                pod.New(),
+			messageHandler:      pod.NewHandler(),
+			availableOperations: ops,
+			operations:          initializeOperationList(),
 		},
 	}
 }
@@ -80,26 +76,22 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			correction = 0
 		}
-		m.namespaceModel.namespaces.SetHeight(msg.Height + correction)
-		m.namespaceModel.namespaces.SetWidth(msg.Width + correction)
-		m.operationModel.operations.SetHeight(msg.Height + correction)
-		m.operationModel.operations.SetWidth(msg.Width + correction)
-		m.podModel.pods.SetHeight(msg.Height + correction)
-		m.podModel.pods.SetWidth(msg.Width + correction)
+		m.namespaceModel.namespaces.SetSize(msg.Width, msg.Height+correction)
+		m.podModel.operations.SetWidth(msg.Width)
+		m.podModel.pods.SetSize(msg.Width, msg.Height+correction-m.podModel.operations.Height())
 	case startupMsg:
 		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
 	case clusterConnectedMsg:
 		cmds = append(cmds, m.namespaceModel.messageHandler.GetNamespaces(K8sCluster.kubernetes))
 	case namespaceSelectedMsg:
+		m.podModel.namespace = msg.namespace
+		cmds = append(cmds, m.podModel.Init())
 		cmds = append(cmds, m.podModel.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
+		m.podModel.operations.Title = msg.namespace
 		m.state = PodSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
-		m.operationModel.Reset()
 		m.podModel.messageHandler.StopWatching()
-	case backToOperationSelectionMsg:
-		m.state = OperationSelection
-		m.operationModel.Reset()
 	}
 	// Model specific messages
 	switch msg.(type) {
@@ -121,10 +113,6 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
 		cmds = append(cmds, nmCmd)
-	case OperationSelection:
-		om, omCmd := m.operationModel.Update(msg)
-		m.operationModel = om
-		cmds = append(cmds, omCmd)
 	case PodSelection:
 		if _, ok := msg.(pod.Message); ok {
 			break
@@ -143,8 +131,6 @@ func (m K8mpassModel) View() string {
 	switch m.state {
 	case NamespaceSelection:
 		return m.namespaceModel.View()
-	case OperationSelection:
-		return m.operationModel.View()
 	case PodSelection:
 		return m.podModel.View()
 	}

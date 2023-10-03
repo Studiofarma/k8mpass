@@ -3,15 +3,19 @@ package pod
 import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"time"
 )
 
 func New() list.Model {
 	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)
-	l.Title = "Pods"
 	l.SetShowStatusBar(true)
+	l.SetFilteringEnabled(false)
 	l.SetShowHelp(true)
+	l.Title = "Pods"
+	l.SetShowTitle(false)
 	l.Styles.Title = titleStyle
 	l.SetStatusBarItemName("pod", "pods")
+	l.StatusMessageLifetime = 3 * time.Second
 	l.Styles.NoItems.MarginLeft(2)
 	l.KeyMap.GoToEnd.Unbind()
 	l.KeyMap.Quit.SetKeys("q", "ctrl+c")
@@ -26,7 +30,7 @@ func New() list.Model {
 		return []key.Binding{
 			key.NewBinding(
 				key.WithKeys("backspace", "esc"),
-				key.WithHelp("⌫/esc", "back"),
+				key.WithHelp("backspace/esc", "back"),
 			),
 		}
 	}
