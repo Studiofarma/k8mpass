@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	pageHeight = 8
-	pageWidth  = 80
+	pageMaxHeight = 8
+	pageWidth     = 80
 )
 
 var (
@@ -73,13 +73,15 @@ func (no NamespaceOperation) FilterValue() string {
 
 func initializeOperationList() list.Model {
 	var items []list.Item
-	l := list.New(items, OperationItemDelegate{}, pageWidth, pageHeight)
+	l := list.New(items, OperationItemDelegate{}, pageWidth, pageMaxHeight)
 	l.Title = "Namespace operations"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowFilter(false)
 	l.Styles.Title = titleStyle
+	l.Styles.NoItems.MarginLeft(2)
+	l.SetStatusBarItemName("operation", "operations")
 	l.StatusMessageLifetime = time.Second * 3
 	additionalKeys := func() []key.Binding {
 		return []key.Binding{

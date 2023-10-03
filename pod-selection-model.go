@@ -16,6 +16,10 @@ type PodSelectionModel struct {
 	pods                list.Model
 	operations          list.Model
 	namespace           string
+	dimensions          struct {
+		width  int
+		height int
+	}
 }
 
 func (m PodSelectionModel) Init() tea.Cmd {
@@ -61,6 +65,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 			ops = append(ops, operation)
 		}
 		cmd := m.operations.SetItems(ops)
+		m.UpdateSize()
 		cmds = append(cmds, cmd)
 	case noOutputResultMsg:
 		var style lipgloss.Style
@@ -110,4 +115,20 @@ func (m PodSelectionModel) View() string {
 func (o *PodSelectionModel) Reset() {
 	o.operations.ResetSelected()
 	o.pods.ResetSelected()
+	o.operations.SetItems(make([]list.Item, 0))
+	o.pods.SetItems(make([]list.Item, 0))
+	o.messageHandler.StopWatching()
+}
+
+func (m *PodSelectionModel) UpdateSize() {
+	n := len(m.operations.Items())
+	emptyCorrection := 0
+	if n != 0 {
+		emptyCorrection = -1
+	}
+	opsHeight := min(8, 4+n+emptyCorrection)
+	m.operations.SetHeight(opsHeight)
+	m.pods.SetHeight(m.dimensions.height - opsHeight)
+	m.operations.SetWidth(m.dimensions.width)
+	m.pods.SetWidth(m.dimensions.width)
 }

@@ -35,6 +35,11 @@ func (n ItemDelegate) Spacing() int {
 }
 
 func (n ItemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
+	if len(m.Items()) == 0 {
+		m.SetShowStatusBar(false)
+	} else {
+		m.SetShowStatusBar(true)
+	}
 	return nil
 }
 

@@ -23,5 +23,5 @@ var (
 				PaddingLeft(2).
 				Foreground(lipgloss.Color("170"))
 	unselectedItemStyle = lipgloss.NewStyle().
-				PaddingLeft(4)
+				MarginLeft(2)
 )

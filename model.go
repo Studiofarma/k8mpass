@@ -77,6 +77,11 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			correction = 0
 		}
 		m.namespaceModel.namespaces.SetSize(msg.Width, msg.Height+correction)
+		m.podModel.dimensions = struct {
+			width  int
+			height int
+		}{width: msg.Width, height: msg.Height}
+		m.podModel.UpdateSize()
 		m.podModel.operations.SetWidth(msg.Width)
 		m.podModel.pods.SetSize(msg.Width, msg.Height+correction-m.podModel.operations.Height())
 	case startupMsg:
@@ -91,7 +96,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = PodSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
-		m.podModel.messageHandler.StopWatching()
+		m.podModel.Reset()
 	}
 	// Model specific messages
 	switch msg.(type) {
