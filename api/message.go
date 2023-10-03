@@ -6,5 +6,5 @@ type NoOutputResultMsg struct {
 }
 
 type AvailableOperationsMsg struct {
-	Operations []NamespaceOperation
+	Operations []INamespaceOperation
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"github.com/studiofarma/k8mpass/api"
-	"github.com/studiofarma/k8mpass/extensions"
 	"runtime"
 	"time"
 
@@ -28,23 +27,21 @@ const (
 	PodSelection       modelState = 3
 )
 
-func initialModel() K8mpassModel {
+func initialModel(extensions []api.IExtension, operations []api.INamespaceOperation) K8mpassModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
-	ops := []api.NamespaceOperation{extensions.CheckSleepingStatusOperation, WakeUpReviewOperation, OpenDbmsOperation, OpenApplicationOperation}
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces: namespace.New(),
 			messageHandler: namespace.NewHandler(
-				//namespace.NamespaceAgeProperty,
-				extensions.ReviewAppSleepStatus,
+				extensions...,
 			),
 		},
 		podModel: PodSelectionModel{
 			pods:                pod.New(),
 			messageHandler:      pod.NewHandler(),
-			availableOperations: ops,
+			availableOperations: operations,
 			operations:          initializeOperationList(),
 		},
 	}

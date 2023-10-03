@@ -13,7 +13,7 @@ import (
 
 type MessageHandler struct {
 	service    k8mpasskube.NamespaceService
-	extensions []api.Extension
+	extensions []api.IExtension
 }
 
 func (nh MessageHandler) NextEvent() tea.Msg {
@@ -65,7 +65,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 			var namespaces []Item
 			namespaceProperties := make(map[namespaceName][]Property)
 			for idx, e := range nh.extensions {
-				fn := e.ExtendList
+				fn := e.GetExtendList()
 				if fn == nil {
 					continue
 				}
@@ -75,7 +75,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 						namespaceProperties[namespaceName(ns)] = make([]Property, 0)
 					}
 					p := Property{
-						Key:   e.Name,
+						Key:   e.GetName(),
 						Value: string(value),
 						Order: idx,
 					}
@@ -94,7 +94,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 	)
 }
 
-func NewHandler(exts ...api.Extension) *MessageHandler {
+func NewHandler(exts ...api.IExtension) *MessageHandler {
 	return &MessageHandler{
 		service:    k8mpasskube.NamespaceService{},
 		extensions: exts,

@@ -13,7 +13,7 @@ import (
 
 type PodSelectionModel struct {
 	messageHandler      *pod.MessageHandler
-	availableOperations []api.NamespaceOperation
+	availableOperations []api.INamespaceOperation
 	pods                list.Model
 	operations          list.Model
 	namespace           string

@@ -1,11 +1,10 @@
-package namespace
+package main
 
 import (
 	"fmt"
 	"github.com/studiofarma/k8mpass/api"
-	"time"
-
 	v1 "k8s.io/api/core/v1"
+	"time"
 )
 
 func Age(ns v1.Namespace) (api.ExtensionValue, error) {

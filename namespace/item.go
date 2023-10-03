@@ -27,19 +27,19 @@ func (n Item) FilterValue() string {
 	return n.K8sNamespace.Name
 }
 
-func (n *Item) LoadCustomProperties(properties ...api.Extension) {
+func (n *Item) LoadCustomProperties(properties ...api.IExtension) {
 	for idx, p := range properties {
-		fn := p.ExtendSingle
+		fn := p.GetExtendSingle()
 		if fn == nil {
-			log.Println(fmt.Sprintf("Missing extention function for %s", p.Name), "namespace:", n.K8sNamespace.Name)
+			log.Println(fmt.Sprintf("Missing extention function for %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
 			continue
 		}
 		value, err := fn(n.K8sNamespace)
 		if err != nil {
-			log.Println(fmt.Sprintf("Error while computing extension %s", p.Name), "namespace:", n.K8sNamespace.Name)
+			log.Println(fmt.Sprintf("Error while computing extension %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
 			continue
 		}
-		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.Name, Value: string(value), Order: idx})
+		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.GetName(), Value: string(value), Order: idx})
 	}
 }
 
