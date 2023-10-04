@@ -47,9 +47,12 @@ func podStyle(status v1.PodStatus) lipgloss.Style {
 		}
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#66ffc2"))
-	case v1.PodFailed, v1.PodPending:
+	case v1.PodFailed:
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#ff6666"))
+	case v1.PodPending:
+		return lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#fcaf49"))
 	default:
 		return lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#a6a6a6"))

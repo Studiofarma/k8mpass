@@ -24,4 +24,7 @@ var (
 				Foreground(lipgloss.Color("170"))
 	unselectedItemStyle = lipgloss.NewStyle().
 				MarginLeft(2)
+	terminatingNamespace = lipgloss.NewStyle().
+				MarginLeft(2).
+				Foreground(lipgloss.Color("#6b6b6b"))
 )

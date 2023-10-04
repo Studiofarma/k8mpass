@@ -8,6 +8,10 @@ type AddedMsg struct {
 	Namespace Item
 }
 
+type ModifiedMsg struct {
+	Namespace Item
+}
+
 type RemovedMsg struct {
 	Namespace Item
 }

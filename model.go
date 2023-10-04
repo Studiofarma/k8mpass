@@ -92,10 +92,11 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.podModel.Init())
 		cmds = append(cmds, m.podModel.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
 		m.podModel.operations.Title = msg.namespace
+		cmds = append(cmds, m.podModel.operations.StartSpinner())
 		m.state = PodSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
-		m.podModel.Reset()
+		cmds = append(cmds, m.podModel.Reset())
 	}
 	// Model specific messages
 	switch msg.(type) {

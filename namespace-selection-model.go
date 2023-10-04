@@ -40,6 +40,10 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.namespaces.SetItems(ns))
 		cmds = append(cmds, n.messageHandler.NextEvent)
 		cmds = append(cmds, n.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
+	case namespace.ModifiedMsg:
+		var idx = namespace.FindNamespace(n.namespaces.Items(), msg.Namespace)
+		cmds = append(cmds, n.namespaces.SetItem(idx, msg.Namespace))
+		cmds = append(cmds, n.messageHandler.NextEvent)
 	case namespace.RemovedMsg:
 		var idx = namespace.FindNamespace(n.namespaces.Items(), msg.Namespace)
 		n.namespaces.RemoveItem(idx)

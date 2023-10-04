@@ -54,7 +54,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Pod.K8sPod.Name)))
 	case pod.ModifiedPodMsg:
 		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
-		m.pods.SetItem(idx, msg.Pod)
+		cmds = append(cmds, m.pods.SetItem(idx, msg.Pod))
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.NextEventMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
@@ -66,8 +66,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 			ops = append(ops, operation)
 		}
 		cmd := m.operations.SetItems(ops)
-		m.UpdateSize()
 		cmds = append(cmds, cmd)
+		m.UpdateSize()
+		m.operations.StopSpinner()
 	case api.NoOutputResultMsg:
 		var style lipgloss.Style
 		if msg.Success {
@@ -113,21 +114,19 @@ func (m PodSelectionModel) View() string {
 	)
 }
 
-func (m *PodSelectionModel) Reset() {
+func (m *PodSelectionModel) Reset() tea.Cmd {
+	var cmds []tea.Cmd
 	m.operations.ResetSelected()
 	m.pods.ResetSelected()
-	m.operations.SetItems(make([]list.Item, 0))
-	m.pods.SetItems(make([]list.Item, 0))
+	m.operations = initializeOperationList()
+	m.pods = pod.New()
 	m.messageHandler.StopWatching()
+	m.operations.SetHeight(8)
+	return tea.Batch(cmds...)
 }
 
 func (m *PodSelectionModel) UpdateSize() {
-	n := len(m.operations.Items())
-	emptyCorrection := 0
-	if n != 0 {
-		emptyCorrection = -1
-	}
-	opsHeight := min(8, 4+n+emptyCorrection)
+	opsHeight := 8
 	m.operations.SetHeight(opsHeight)
 	m.pods.SetHeight(m.dimensions.height - opsHeight)
 	m.operations.SetWidth(m.dimensions.width)

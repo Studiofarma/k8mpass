@@ -37,6 +37,12 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 		return AddedMsg{
 			Namespace: namespace,
 		}
+	case watch.Modified:
+		namespace.LoadCustomProperties(nh.Extensions...)
+		log.Printf("Modified namespace: %s ", item.Name)
+		return ModifiedMsg{
+			Namespace: namespace,
+		}
 	default:
 		return NextEventMsg{}
 	}

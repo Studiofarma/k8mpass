@@ -70,6 +70,9 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
 	}
 	fn := unselectedItemStyle.Render
+	if i.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
+		fn = terminatingNamespace.Render
+	}
 	if index == m.Index() {
 		fn = func(s ...string) string {
 			return selectedItemStyle.Render(strings.Join(s, " "))

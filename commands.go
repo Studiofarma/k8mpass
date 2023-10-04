@@ -26,6 +26,6 @@ func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operat
 				availableOps = append(availableOps, operation)
 			}
 		}
-		return api.AvailableOperationsMsg{availableOps}
+		return api.AvailableOperationsMsg{Operations: availableOps}
 	}
 }
