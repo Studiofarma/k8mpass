@@ -28,6 +28,7 @@ func (n Item) FilterValue() string {
 }
 
 func (n *Item) LoadCustomProperties(properties ...api.IExtension) {
+	n.ExtendedProperties = make([]Property, 0)
 	for idx, p := range properties {
 		fn := p.GetExtendSingle()
 		if fn == nil {
