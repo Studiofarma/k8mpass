@@ -22,7 +22,7 @@ func main() {
 	extensions, operations := loadPlugins()
 
 	p := tea.NewProgram(
-		initialModel(extensions, operations),
+		initialModel(append(extensions, GetNamespaceExtensions()...), append(operations, GetNamespaceOperations()...)),
 		tea.WithAltScreen(),
 	)
 	_, err := p.Run()
