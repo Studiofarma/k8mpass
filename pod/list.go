@@ -18,7 +18,8 @@ func New() list.Model {
 	l.StatusMessageLifetime = 3 * time.Second
 	l.Styles.NoItems.MarginLeft(2)
 	l.KeyMap.GoToEnd.Unbind()
-	l.KeyMap.Quit.SetKeys("q", "ctrl+c")
+	l.KeyMap.Quit.SetKeys("ctrl+c")
+	l.KeyMap.Quit.SetHelp("ctrl+c", "quit")
 	l.KeyMap.GoToStart.Unbind()
 	l.KeyMap.ShowFullHelp.Unbind()
 	l.KeyMap.CloseFullHelp.Unbind()

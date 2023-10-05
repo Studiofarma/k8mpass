@@ -1,5 +1,9 @@
 package namespace
 
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
+
 type Message interface {
 	isNamespaceMessage()
 }
@@ -31,6 +35,10 @@ type ReloadExtensionsMsg struct {
 	Properties map[string][]Property
 }
 
+type RoutedMsg struct {
+	Embedded tea.Msg
+}
+
 type ErrorMsg struct {
 	Err error
 }
@@ -41,4 +49,5 @@ func (m WatchingMsg) isNamespaceMessage()         {}
 func (m NextEventMsg) isNamespaceMessage()        {}
 func (m ReloadTick) isNamespaceMessage()          {}
 func (m ReloadExtensionsMsg) isNamespaceMessage() {}
+func (m RoutedMsg) isNamespaceMessage()           {}
 func (m ErrorMsg) isNamespaceMessage()            {}

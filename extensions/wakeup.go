@@ -43,6 +43,7 @@ var namespaceOperations = []api.INamespaceOperation{
 var namespaceExtensions = []api.IExtension{
 	ReviewAppSleepStatus,
 	AgeProperty,
+	//PodVersion,
 }
 
 var ReviewAppSleepStatus = api.Extension{

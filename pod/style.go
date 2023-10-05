@@ -33,8 +33,8 @@ func styleString(s string, style lipgloss.Style) lipgloss.Style {
 	return style.SetString(s)
 }
 
-func podStyle(status v1.PodStatus) lipgloss.Style {
-
+func podStyle(status v1.PodStatus, width int) lipgloss.Style {
+	style := lipgloss.NewStyle().Width(width + 3)
 	switch status.Phase {
 	case v1.PodRunning:
 		var ready = true
@@ -42,19 +42,19 @@ func podStyle(status v1.PodStatus) lipgloss.Style {
 			ready = ready && c.Ready
 		}
 		if !ready {
-			return lipgloss.NewStyle().
+			return style.
 				Foreground(lipgloss.Color("#ff6666"))
 		}
-		return lipgloss.NewStyle().
+		return style.
 			Foreground(lipgloss.Color("#66ffc2"))
 	case v1.PodFailed:
-		return lipgloss.NewStyle().
+		return style.
 			Foreground(lipgloss.Color("#ff6666"))
 	case v1.PodPending:
-		return lipgloss.NewStyle().
+		return style.
 			Foreground(lipgloss.Color("#fcaf49"))
 	default:
-		return lipgloss.NewStyle().
+		return style.
 			Foreground(lipgloss.Color("#a6a6a6"))
 	}
 

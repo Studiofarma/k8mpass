@@ -154,3 +154,12 @@ func NewHandler(exts ...api.IExtension) *MessageHandler {
 		Extensions: exts,
 	}
 }
+
+func Route(cmd tea.Cmd) tea.Cmd {
+	return func() tea.Msg {
+		if cmd == nil {
+			return nil
+		}
+		return RoutedMsg{cmd()}
+	}
+}
