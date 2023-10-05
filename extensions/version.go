@@ -1,41 +1,46 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/studiofarma/k8mpass/api"
 	v1 "k8s.io/api/core/v1"
 	"slices"
 )
 
-var apps = []string{"backend"}
+var apps = []string{"backend", "sf-full", "spring-batch-ita", "spring-batch-deu"}
 
-var PodVersion = api.Extension{
+var PodVersion = api.PodExtension{
 	Name:         "version",
 	ExtendSingle: PodVersionSingle,
 	ExtendList:   PodVersionList,
 }
 
-func PodVersionSingle(ns v1.Namespace) (api.ExtensionValue, error) {
-	if !slices.Contains(apps, ns.Labels["app"]) {
+func PodVersionSingle(pod v1.Pod) (string, error) {
+	if !slices.Contains(apps, pod.Labels["app"]) {
 		return "", nil
 	}
-	version, err := semver.NewVersion(ns.Labels["AppVersion"])
+	appVersion := pod.Labels["AppVersion"]
+	if appVersion == "" {
+		appVersion = pod.Annotations["AppVersion"]
+	}
+	version, err := semver.NewVersion(appVersion)
 	if err != nil {
-		return "", err
+		return "", nil
 	}
 	if version.Major() > 0 {
-		return api.ExtensionValue("v" + version.String()), nil
+		return fmt.Sprintf("(v%s)", version.String()), nil
 	}
-	return api.ExtensionValue("commit " + version.Prerelease()), nil
+	return fmt.Sprintf("(%s)", version.Prerelease()), nil
 }
-func PodVersionList(ns []v1.Namespace) map[api.Name]api.ExtensionValue {
-	res := make(map[api.Name]api.ExtensionValue, len(ns))
+func PodVersionList(ns []v1.Pod) map[string]string {
+	res := make(map[string]string, len(ns))
 	for _, n := range ns {
 		ext, err := PodVersionSingle(n)
 		if err != nil {
 			continue
 		}
-		res[api.Name(n.Name)] = ext
+		res[n.Name] = ext
 	}
 	return res
 }

@@ -24,19 +24,20 @@ const (
 	PodSelection       modelState = 1
 )
 
-func initialModel(extensions []api.IExtension, operations []api.INamespaceOperation) K8mpassModel {
+func initialModel(plugins api.IPlugins) K8mpassModel {
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces: namespace.New(),
 			messageHandler: namespace.NewHandler(
-				extensions...,
+				plugins.GetNamespaceExtensions()...,
 			),
 		},
 		podModel: PodSelectionModel{
-			pods:                pod.New(),
-			messageHandler:      pod.NewHandler(),
-			availableOperations: operations,
+			pods: pod.New(),
+			messageHandler: pod.NewHandler(
+				plugins.GetPodExtensions()...),
+			availableOperations: plugins.GetNamespaceOperations(),
 			operations:          initializeOperationList(),
 		},
 	}
@@ -95,22 +96,6 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.podModel.Reset()
 	}
 
-	//switch m.state {
-	//case NamespaceSelection:
-	//	if _, ok := msg.(namespace.Message); ok {
-	//		break
-	//	}
-	//	nm, nmCmd := m.namespaceModel.Update(msg)
-	//	m.namespaceModel = nm
-	//	cmds = append(cmds, nmCmd)
-	//case PodSelection:
-	//	if _, ok := msg.(pod.Message); ok {
-	//		break
-	//	}
-	//	pm, pmCmd := m.podModel.Update(msg)
-	//	m.podModel = pm
-	//	cmds = append(cmds, pmCmd)
-	//}
 	return m, tea.Batch(cmds...)
 }
 

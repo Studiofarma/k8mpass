@@ -2,15 +2,9 @@ package pod
 
 import (
 	"fmt"
-	"github.com/Masterminds/semver/v3"
-	"github.com/charmbracelet/lipgloss"
-	"io"
-	"math"
-	"slices"
-	"time"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"io"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -53,7 +47,6 @@ func (n ItemDelegate) Render(w io.Writer, l list.Model, _ int, listItem list.Ite
 	if !ok {
 		return
 	}
-	i.LoadProperties()
 	customProperties := ""
 	for _, property := range i.ExtendedProperties {
 		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
@@ -75,59 +68,4 @@ func FindPod(items []list.Item, search Item) int {
 		}
 	}
 	return idx
-}
-
-var apps = []string{"backend", "sf-full", "spring-batch-ita", "spring-batch-deu"}
-
-func (p *Item) LoadProperties() {
-	var properties []Property
-
-	properties = append(properties, Property{
-		Key:   "age",
-		Value: PodAge(p.K8sPod),
-		Order: 0,
-	})
-
-	properties = append(properties, Property{
-		Key:   "version",
-		Value: PodVersionSingle(p.K8sPod),
-		Order: 0,
-	})
-	p.ExtendedProperties = properties
-}
-
-func PodVersionSingle(pod v1.Pod) string {
-	if !slices.Contains(apps, pod.Labels["app"]) {
-		return ""
-	}
-	appVersion := pod.Labels["AppVersion"]
-	if appVersion == "" {
-		appVersion = pod.Annotations["AppVersion"]
-	}
-	version, err := semver.NewVersion(appVersion)
-	if err != nil {
-		return ""
-	}
-	if version.Major() > 0 {
-		return fmt.Sprintf("(v%s)", version.String())
-	}
-	return fmt.Sprintf("(%s)", version.Prerelease())
-}
-
-func PodAge(pod v1.Pod) string {
-	time := time.Now().Sub(pod.CreationTimestamp.Time)
-	var res float64
-	var unit string
-	if time.Minutes() < 60 {
-		res = time.Minutes()
-		unit = "m"
-	} else if time.Hours() < 24 {
-		res = time.Hours()
-		unit = "h"
-	} else {
-		res = time.Hours() / 24
-		unit = "d"
-	}
-	s := fmt.Sprintf("%0.f%s", math.Floor(res), unit)
-	return lipgloss.NewStyle().Width(3).Render(s)
 }

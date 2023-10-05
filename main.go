@@ -19,10 +19,10 @@ func main() {
 	} else {
 		log.Println("Loaded .env correctly")
 	}
-	extensions, operations := loadPlugins()
+	plugins := loadPlugins()
 
 	p := tea.NewProgram(
-		initialModel(append(extensions, GetNamespaceExtensions()...), append(operations, GetNamespaceOperations()...)),
+		initialModel(plugins),
 		tea.WithAltScreen(),
 	)
 	_, err := p.Run()
@@ -32,10 +32,10 @@ func main() {
 	}
 }
 
-func loadPlugins() ([]api.IExtension, []api.INamespaceOperation) {
+func loadPlugins() api.IPlugins {
 	args := os.Args
 	if len(args) < 3 {
-		return make([]api.IExtension, 0), make([]api.INamespaceOperation, 0)
+		return api.Plugins{}
 	}
 	pluginPath := os.Args[2]
 	plug, err := plugin.Open(pluginPath)
@@ -43,28 +43,16 @@ func loadPlugins() ([]api.IExtension, []api.INamespaceOperation) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	symExtensions, err := plug.Lookup("GetNamespaceExtensions")
+	symPlugins, err := plug.Lookup("Plugins")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	var extensions func() []api.IExtension
-	extensions, ok := symExtensions.(func() []api.IExtension)
+	var plugins api.IPlugins
+	plugins, ok := symPlugins.(api.IPlugins)
 	if !ok {
-		fmt.Println("unexpected type from module symbol ", symExtensions)
+		fmt.Println("unexpected type from module symbol ", symPlugins)
 		os.Exit(1)
 	}
-
-	symOperations, err := plug.Lookup("GetNamespaceOperations")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	var operations func() []api.INamespaceOperation
-	operations, ok = symOperations.(func() []api.INamespaceOperation)
-	if !ok {
-		fmt.Println("unexpected type from module symbol ", symOperations)
-		os.Exit(1)
-	}
-	return extensions(), operations()
+	return plugins
 }

@@ -26,27 +26,24 @@ const (
 	awake    = "Awake!"
 )
 
-func GetNamespaceExtensions() []api.IExtension {
-	return namespaceExtensions
-}
-
-func GetNamespaceOperations() []api.INamespaceOperation {
-	return namespaceOperations
-}
-
 var namespaceOperations = []api.INamespaceOperation{
 	WakeUpReviewOperation,
 	OpenDbmsOperation,
 	OpenApplicationOperation,
 }
 
-var namespaceExtensions = []api.IExtension{
+var namespaceExtensions = []api.INamespaceExtension{
 	ReviewAppSleepStatus,
-	AgeProperty,
+	NamespaceAgeProperty,
 	//PodVersion,
 }
 
-var ReviewAppSleepStatus = api.Extension{
+var podExtensions = []api.IPodExtension{
+	PodAgeProperty,
+	PodVersion,
+}
+
+var ReviewAppSleepStatus = api.NamespaceExtension{
 	Name:         "sleeping",
 	ExtendSingle: IsReviewAppSleeping,
 	ExtendList:   AreReviewAppsSleeping,
@@ -127,7 +124,7 @@ func (r ThanosResponse) Status() string {
 	}
 }
 
-func IsReviewAppSleeping(ns v1.Namespace) (api.ExtensionValue, error) {
+func IsReviewAppSleeping(ns v1.Namespace) (string, error) {
 	if !IsReviewApp(ns.Name) {
 		return "", nil
 	}
@@ -156,9 +153,9 @@ func IsReviewAppSleeping(ns v1.Namespace) (api.ExtensionValue, error) {
 	if err != nil {
 		return "", err
 	}
-	return api.ExtensionValue(thResponse.Status()), nil
+	return thResponse.Status(), nil
 }
-func AreReviewAppsSleeping(ns []v1.Namespace) map[api.Name]api.ExtensionValue {
+func AreReviewAppsSleeping(ns []v1.Namespace) map[string]string {
 	thanosUrl, isPresent := os.LookupEnv("THANOS_URL")
 	if !isPresent {
 		return nil
@@ -184,9 +181,9 @@ func AreReviewAppsSleeping(ns []v1.Namespace) map[api.Name]api.ExtensionValue {
 	if err != nil {
 		return nil
 	}
-	values := make(map[api.Name]api.ExtensionValue, len(ns))
+	values := make(map[string]string, len(ns))
 	for _, n := range ns {
-		values[api.Name(n.Name)] = api.ExtensionValue(thResponse.StatusByNamespace(n.Name))
+		values[n.Name] = thResponse.StatusByNamespace(n.Name)
 	}
 
 	return values

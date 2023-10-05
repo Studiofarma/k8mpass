@@ -2,32 +2,55 @@ package api
 
 import v1 "k8s.io/api/core/v1"
 
-type IExtension interface {
+type INamespaceExtension interface {
 	GetName() string
-	GetExtendSingle() ExtendSingleFunc
-	GetExtendList() ExtendListFunc
+	GetExtendSingle() NamespaceExtendSingleFunc
+	GetExtendList() NamespaceExtendListFunc
 }
 
-type Extension struct {
+type NamespaceExtension struct {
 	Name         string
-	ExtendSingle ExtendSingleFunc
-	ExtendList   ExtendListFunc
+	ExtendSingle NamespaceExtendSingleFunc
+	ExtendList   NamespaceExtendListFunc
 }
 
-func (e Extension) GetName() string {
+func (e NamespaceExtension) GetName() string {
 	return e.Name
 }
 
-func (e Extension) GetExtendSingle() ExtendSingleFunc {
+func (e NamespaceExtension) GetExtendSingle() NamespaceExtendSingleFunc {
 	return e.ExtendSingle
 }
 
-func (e Extension) GetExtendList() ExtendListFunc {
+func (e NamespaceExtension) GetExtendList() NamespaceExtendListFunc {
 	return e.ExtendList
 }
 
-type Name string
-type ExtensionValue string
+type NamespaceExtendSingleFunc func(ns v1.Namespace) (string, error)
+type NamespaceExtendListFunc func(ns []v1.Namespace) map[string]string
+type IPodExtension interface {
+	GetName() string
+	GetExtendSingle() PodExtendSingleFunc
+	GetExtendList() PodExtendListFunc
+}
 
-type ExtendSingleFunc func(ns v1.Namespace) (ExtensionValue, error)
-type ExtendListFunc func(ns []v1.Namespace) map[Name]ExtensionValue
+type PodExtension struct {
+	Name         string
+	ExtendSingle PodExtendSingleFunc
+	ExtendList   PodExtendListFunc
+}
+
+func (e PodExtension) GetName() string {
+	return e.Name
+}
+
+func (e PodExtension) GetExtendSingle() PodExtendSingleFunc {
+	return e.ExtendSingle
+}
+
+func (e PodExtension) GetExtendList() PodExtendListFunc {
+	return e.ExtendList
+}
+
+type PodExtendSingleFunc func(pod v1.Pod) (string, error)
+type PodExtendListFunc func(pods []v1.Pod) map[string]string

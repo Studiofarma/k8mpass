@@ -27,7 +27,7 @@ func (n Item) FilterValue() string {
 	return n.K8sNamespace.Name
 }
 
-func (n *Item) LoadCustomProperties(properties ...api.IExtension) {
+func (n *Item) LoadCustomProperties(properties ...api.INamespaceExtension) {
 	n.ExtendedProperties = make([]Property, 0)
 	for idx, p := range properties {
 		fn := p.GetExtendSingle()
@@ -40,7 +40,7 @@ func (n *Item) LoadCustomProperties(properties ...api.IExtension) {
 			log.Println(fmt.Sprintf("Error while computing extension %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
 			continue
 		}
-		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.GetName(), Value: string(value), Order: idx})
+		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.GetName(), Value: value, Order: idx})
 	}
 }
 

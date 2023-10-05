@@ -13,7 +13,7 @@ import (
 
 type MessageHandler struct {
 	service    k8mpasskube.NamespaceService
-	Extensions []api.IExtension
+	Extensions []api.INamespaceExtension
 }
 
 func (nh MessageHandler) NextEvent() tea.Msg {
@@ -68,8 +68,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 			if err != nil {
 				return ErrorMsg{err}
 			}
-			var namespaces []Item
-			namespaces = LoadExtensions(nh.Extensions, res.Items)
+			namespaces := LoadExtensions(nh.Extensions, res.Items)
 			return ListMsg{
 				Namespaces:      namespaces,
 				ResourceVersion: res.ResourceVersion,
@@ -94,7 +93,7 @@ func Refresh() tea.Cmd {
 	})
 }
 
-func LoadExtensions(extensions []api.IExtension, res []v1.Namespace) []Item {
+func LoadExtensions(extensions []api.INamespaceExtension, res []v1.Namespace) []Item {
 	var namespaces []Item
 	namespaceProperties := make(map[namespaceName][]Property)
 	for idx, e := range extensions {
@@ -121,7 +120,7 @@ func LoadExtensions(extensions []api.IExtension, res []v1.Namespace) []Item {
 	return namespaces
 }
 
-func GetReloadedExtensions(extensions []api.IExtension, res []Item) map[string][]Property {
+func GetReloadedExtensions(extensions []api.INamespaceExtension, res []Item) map[string][]Property {
 	namespaceProperties := make(map[string][]Property)
 	for idx, e := range extensions {
 		fn := e.GetExtendList()
@@ -148,7 +147,7 @@ func GetReloadedExtensions(extensions []api.IExtension, res []Item) map[string][
 	return namespaceProperties
 }
 
-func NewHandler(exts ...api.IExtension) *MessageHandler {
+func NewHandler(exts ...api.INamespaceExtension) *MessageHandler {
 	return &MessageHandler{
 		service:    k8mpasskube.NamespaceService{},
 		Extensions: exts,

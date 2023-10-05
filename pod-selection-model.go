@@ -134,7 +134,6 @@ func (m *PodSelectionModel) Reset() {
 	m.operations = initializeOperationList()
 	m.pods = pod.New()
 	m.messageHandler.StopWatching()
-	m.operations.SetHeight(8)
 }
 
 func (m *PodSelectionModel) UpdateSize() {
