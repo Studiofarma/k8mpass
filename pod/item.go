@@ -2,7 +2,9 @@ package pod
 
 import (
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"io"
+	"slices"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -48,7 +50,7 @@ func (n ItemDelegate) Render(w io.Writer, _ list.Model, _ int, listItem list.Ite
 	if !ok {
 		return
 	}
-	_, _ = fmt.Fprintf(w, "  %s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)))
+	_, _ = fmt.Fprintf(w, "  %s%s", styleString(i.K8sPod.Name, podStyle(i.K8sPod.Status)), customPropertiesStyle.Render(PodVersionSingle(i.K8sPod)))
 }
 
 func FindPod(items []list.Item, search Item) int {
@@ -61,4 +63,24 @@ func FindPod(items []list.Item, search Item) int {
 		}
 	}
 	return idx
+}
+
+var apps = []string{"backend", "sf-full", "spring-batch-ita", "spring-batch-deu"}
+
+func PodVersionSingle(ns v1.Pod) string {
+	if !slices.Contains(apps, ns.Labels["app"]) {
+		return ""
+	}
+	appVersion := ns.Labels["AppVersion"]
+	if appVersion == "" {
+		appVersion = ns.Annotations["AppVersion"]
+	}
+	version, err := semver.NewVersion(appVersion)
+	if err != nil {
+		return ""
+	}
+	if version.Major() > 0 {
+		return "v" + version.String()
+	}
+	return fmt.Sprintf("(%s)", version.Prerelease())
 }

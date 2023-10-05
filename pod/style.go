@@ -20,7 +20,7 @@ var (
 	statusMessageRed = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#ff6666"))
 	customPropertiesStyle = lipgloss.NewStyle().
-				PaddingLeft(4).
+				PaddingLeft(2).
 				Foreground(lipgloss.Color("#7d7d7d"))
 	selectedItemStyle = lipgloss.NewStyle().
 				PaddingLeft(2).

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"log"
+	"time"
 )
 
 type MessageHandler struct {
@@ -78,6 +79,21 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 	)
 }
 
+func (nh *MessageHandler) ReloadExtensions(namespaces []Item) tea.Cmd {
+	return func() tea.Msg {
+		extensions := GetReloadedExtensions(nh.Extensions, namespaces)
+		return ReloadExtensionsMsg{
+			Properties: extensions,
+		}
+	}
+}
+
+func Refresh() tea.Cmd {
+	return tea.Tick(time.Minute, func(t time.Time) tea.Msg {
+		return ReloadTick{}
+	})
+}
+
 func LoadExtensions(extensions []api.IExtension, res []v1.Namespace) []Item {
 	var namespaces []Item
 	namespaceProperties := make(map[namespaceName][]Property)
@@ -103,6 +119,33 @@ func LoadExtensions(extensions []api.IExtension, res []v1.Namespace) []Item {
 		namespaces = append(namespaces, Item{n, namespaceProperties[namespaceName(n.Name)]})
 	}
 	return namespaces
+}
+
+func GetReloadedExtensions(extensions []api.IExtension, res []Item) map[string][]Property {
+	namespaceProperties := make(map[string][]Property)
+	for idx, e := range extensions {
+		fn := e.GetExtendList()
+		if fn == nil {
+			continue
+		}
+		var v1Namespaces []v1.Namespace
+		for _, v := range res {
+			v1Namespaces = append(v1Namespaces, v.K8sNamespace)
+		}
+		nsToValue := fn(v1Namespaces)
+		for ns, value := range nsToValue {
+			if namespaceProperties[string(ns)] == nil {
+				namespaceProperties[string(ns)] = make([]Property, 0)
+			}
+			p := Property{
+				Key:   e.GetName(),
+				Value: string(value),
+				Order: idx,
+			}
+			namespaceProperties[string(ns)] = append(namespaceProperties[string(ns)], p)
+		}
+	}
+	return namespaceProperties
 }
 
 func NewHandler(exts ...api.IExtension) *MessageHandler {

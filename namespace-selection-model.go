@@ -23,12 +23,14 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	switch msg := msg.(type) {
 	case namespace.WatchingMsg:
 		cmds = append(cmds, n.messageHandler.NextEvent)
+		cmds = append(cmds, namespace.Refresh())
 	case namespace.ListMsg:
 		items := make([]list.Item, len(msg.Namespaces))
 		for i, ns := range msg.Namespaces {
 			items[i] = ns
 		}
 		cmds = append(cmds, n.namespaces.SetItems(items))
+		//cmds = append(cmds, n.namespaces.SetItems(items))
 		n.namespaces.StopSpinner()
 		n.namespaces.Title = "Select a namespace"
 	case namespace.AddedMsg:
@@ -53,6 +55,27 @@ func (n NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, n.messageHandler.NextEvent)
 	case namespace.ErrorMsg:
 		n.namespaces.NewStatusMessage(msg.Err.Error())
+	case namespace.ReloadTick:
+		var namespaces []namespace.Item
+		for _, item := range n.namespaces.Items() {
+			namespaces = append(namespaces, item.(namespace.Item))
+		}
+		cmds = append(cmds, n.messageHandler.ReloadExtensions(namespaces))
+	case namespace.ReloadExtensionsMsg:
+		items := n.namespaces.Items()
+		for idx, item := range items {
+			ns := item.(namespace.Item)
+			property := msg.Properties[ns.K8sNamespace.Name]
+			if property == nil {
+				continue
+			} else {
+				ns.ExtendedProperties = msg.Properties[ns.K8sNamespace.Name]
+				items[idx] = ns
+			}
+		}
+		cmds = append(cmds, n.namespaces.SetItems(items))
+		cmds = append(cmds, namespace.Refresh())
+		cmds = append(cmds, n.namespaces.NewStatusMessage("Reloaded"))
 	case tea.KeyMsg:
 		if n.namespaces.FilterState() == list.Filtering {
 			break

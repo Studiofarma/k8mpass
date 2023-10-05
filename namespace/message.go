@@ -25,12 +25,20 @@ type NextEventMsg struct{}
 
 type WatchingMsg struct{}
 
+type ReloadTick struct{}
+
+type ReloadExtensionsMsg struct {
+	Properties map[string][]Property
+}
+
 type ErrorMsg struct {
 	Err error
 }
 
-func (m AddedMsg) isNamespaceMessage()     {}
-func (m RemovedMsg) isNamespaceMessage()   {}
-func (m WatchingMsg) isNamespaceMessage()  {}
-func (m NextEventMsg) isNamespaceMessage() {}
-func (m ErrorMsg) isNamespaceMessage()     {}
+func (m AddedMsg) isNamespaceMessage()            {}
+func (m RemovedMsg) isNamespaceMessage()          {}
+func (m WatchingMsg) isNamespaceMessage()         {}
+func (m NextEventMsg) isNamespaceMessage()        {}
+func (m ReloadTick) isNamespaceMessage()          {}
+func (m ReloadExtensionsMsg) isNamespaceMessage() {}
+func (m ErrorMsg) isNamespaceMessage()            {}
