@@ -8,15 +8,14 @@ import (
 	"time"
 )
 
-func Age(ns v1.Namespace) (string, error) {
-	res := fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
-	return res, nil
+func NamespaceAge(ns v1.Namespace) (string, error) {
+	return ResourceAge(ns.CreationTimestamp.Time), nil
 }
 
-func AgeList(ns []v1.Namespace) map[string]string {
+func NamespaceAgeList(ns []v1.Namespace) map[string]string {
 	values := make(map[string]string)
 	for _, n := range ns {
-		age, _ := Age(n)
+		age, _ := NamespaceAge(n)
 		values[n.Name] = age
 	}
 	return values
@@ -24,17 +23,17 @@ func AgeList(ns []v1.Namespace) map[string]string {
 
 var NamespaceAgeProperty = api.NamespaceExtension{
 	Name:         "age",
-	ExtendSingle: Age,
-	ExtendList:   AgeList,
+	ExtendSingle: NamespaceAge,
+	ExtendList:   NamespaceAgeList,
 }
 var PodAgeProperty = api.PodExtension{
 	Name:         "age",
-	ExtendSingle: PodAgeSingle,
+	ExtendSingle: PodAge,
 	ExtendList:   PodAgeList,
 }
 
-func PodAgeSingle(pod v1.Pod) (string, error) {
-	t := time.Now().Sub(pod.CreationTimestamp.Time)
+func ResourceAge(creation time.Time) string {
+	t := time.Now().Sub(creation)
 	var res float64
 	var unit string
 	if t.Minutes() < 60 {
@@ -48,13 +47,18 @@ func PodAgeSingle(pod v1.Pod) (string, error) {
 		unit = "d"
 	}
 	s := fmt.Sprintf("%0.f%s", math.Floor(res), unit)
-	return s, nil
+	return s
+
+}
+
+func PodAge(pod v1.Pod) (string, error) {
+	return ResourceAge(pod.CreationTimestamp.Time), nil
 }
 
 func PodAgeList(pods []v1.Pod) map[string]string {
 	res := make(map[string]string, len(pods))
 	for _, pod := range pods {
-		property, err := PodAgeSingle(pod)
+		property, err := PodAge(pod)
 		if err != nil {
 			continue
 		}

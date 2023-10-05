@@ -30,7 +30,7 @@ var (
 )
 
 type OperationItemDelegate struct {
-	NamespaceOperation api.NamespaceOperation
+	IsFocused bool
 }
 
 func (o OperationItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -42,7 +42,7 @@ func (o OperationItemDelegate) Render(w io.Writer, m list.Model, index int, list
 	str := i.Name
 
 	fn := lipgloss.NewStyle().PaddingLeft(2).Render
-	if index == m.Index() {
+	if o.IsFocused && index == m.Index() {
 		fn = func(s ...string) string {
 			return lipgloss.
 				NewStyle().
@@ -70,7 +70,7 @@ func (o OperationItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 
 func initializeOperationList() list.Model {
 	var items []list.Item
-	l := list.New(items, OperationItemDelegate{}, 0, 0)
+	l := list.New(items, OperationItemDelegate{IsFocused: true}, 0, 0)
 	l.Title = "Namespace operations"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)

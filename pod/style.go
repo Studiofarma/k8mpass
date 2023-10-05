@@ -21,6 +21,7 @@ var (
 				Foreground(lipgloss.Color("#ff6666"))
 	customPropertiesStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
+				PaddingRight(1).
 				Foreground(lipgloss.Color("#7d7d7d"))
 	selectedItemStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
@@ -28,10 +29,6 @@ var (
 	unselectedItemStyle = lipgloss.NewStyle().
 				PaddingLeft(4)
 )
-
-func styleString(s string, style lipgloss.Style) lipgloss.Style {
-	return style.SetString(s)
-}
 
 func podStyle(status v1.PodStatus, width int) lipgloss.Style {
 	style := lipgloss.NewStyle().Width(width + 3)

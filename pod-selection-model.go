@@ -22,7 +22,15 @@ type PodSelectionModel struct {
 		width  int
 		height int
 	}
+	focus focus
 }
+
+type focus int8
+
+const (
+	operations focus = 0
+	pods       focus = 1
+)
 
 func (m PodSelectionModel) Init() tea.Cmd {
 	return nil
@@ -95,18 +103,49 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
-			i, ok := m.operations.SelectedItem().(api.NamespaceOperation)
-			if ok {
-				opCommand := i.Command(K8sCluster.kubernetes, m.namespace)
-				cmds = append(cmds, opCommand)
-			} else {
-				panic("Casting went wrong")
+			switch m.focus {
+			case operations:
+				i, ok := m.operations.SelectedItem().(api.NamespaceOperation)
+				if ok {
+					opCommand := i.Command(K8sCluster.kubernetes, m.namespace)
+					cmds = append(cmds, opCommand)
+				} else {
+					panic("Casting went wrong")
+				}
 			}
 		case "backspace", "esc":
 			m.pods.NewStatusMessage("")
 			cmds = append(cmds, func() tea.Msg {
 				return backToNamespaceSelectionMsg{}
 			})
+		case "tab":
+			switch m.focus {
+			case operations:
+				m.focus = pods
+				m.pods.SetDelegate(pod.ItemDelegate{IsFocused: true})
+				m.operations.SetDelegate(OperationItemDelegate{IsFocused: false})
+			case pods:
+				m.focus = operations
+				m.pods.SetDelegate(pod.ItemDelegate{IsFocused: false})
+				m.operations.SetDelegate(OperationItemDelegate{IsFocused: true})
+			}
+		default:
+			switch m.focus {
+			case pods:
+				lm, lmCmd := m.pods.Update(msg)
+				m.pods = lm
+				routedCmds = append(cmds, lmCmd)
+
+				cmds = append(cmds, pod.Route(routedCmds...)...)
+				return m, tea.Batch(cmds...)
+			case operations:
+				om, omCmd := m.operations.Update(msg)
+				m.operations = om
+				routedCmds = append(cmds, omCmd)
+
+				cmds = append(cmds, pod.Route(routedCmds...)...)
+				return m, tea.Batch(cmds...)
+			}
 		}
 	}
 

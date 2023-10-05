@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"io"
 	v1 "k8s.io/api/core/v1"
 )
@@ -23,7 +24,9 @@ func (n Item) FilterValue() string {
 	return n.K8sPod.Name
 }
 
-type ItemDelegate struct{}
+type ItemDelegate struct {
+	IsFocused bool
+}
 
 func (n ItemDelegate) Height() int {
 	return 1
@@ -42,20 +45,29 @@ func (n ItemDelegate) Update(_ tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
-func (n ItemDelegate) Render(w io.Writer, l list.Model, _ int, listItem list.Item) {
+func (n ItemDelegate) Render(w io.Writer, l list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(Item)
 	if !ok {
 		return
 	}
-	customProperties := ""
-	for _, property := range i.ExtendedProperties {
-		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
-	}
 	maxLength := 0
-	for _, item := range l.Items() {
+	for _, item := range l.VisibleItems() {
 		maxLength = max(maxLength, len(item.FilterValue()))
 	}
-	_, _ = fmt.Fprintf(w, "  %s%s", podStyle(i.K8sPod.Status, maxLength).Render(i.K8sPod.Name), customProperties)
+	style := podStyle(i.K8sPod.Status, maxLength)
+	propertiesStyle := customPropertiesStyle.Copy()
+	if n.IsFocused && index == l.Index() {
+		style = style.Background(lipgloss.Color("#444852"))
+		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
+	}
+	customProperties := ""
+	for _, property := range i.ExtendedProperties {
+		if property.Value == "" {
+			continue
+		}
+		customProperties += propertiesStyle.Render(property.Value)
+	}
+	_, _ = fmt.Fprintf(w, "  %s%s", style.Render(i.K8sPod.Name), customProperties)
 }
 
 func FindPod(items []list.Item, search Item) int {

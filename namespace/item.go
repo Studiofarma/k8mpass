@@ -2,14 +2,12 @@ package namespace
 
 import (
 	"fmt"
-	"github.com/studiofarma/k8mpass/api"
-	"io"
-	"log"
-	"strings"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/studiofarma/k8mpass/api"
+	"io"
 	v1 "k8s.io/api/core/v1"
+	"log"
 )
 
 type Item struct {
@@ -64,22 +62,25 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
+	maxLength := 0
+	for _, item := range m.VisibleItems() {
+		maxLength = max(maxLength, len(item.FilterValue()))
+	}
+
 	namespace := i.K8sNamespace.Name
 	customProperties := ""
 	for _, property := range i.ExtendedProperties {
 		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
 	}
-	fn := unselectedItemStyle.Render
+	style := unselectedItemStyle
 	if i.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
-		fn = terminatingNamespace.Render
+		style = terminatingNamespace
 	}
 	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render(strings.Join(s, " "))
-		}
+		style = selectedItemStyle
 	}
 
-	_, _ = fmt.Fprint(w, fn(namespace)+customProperties)
+	_, _ = fmt.Fprint(w, style.Width(maxLength+3).Render(namespace)+customProperties)
 }
 
 func FindNamespace(items []list.Item, search Item) int {
