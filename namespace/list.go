@@ -5,7 +5,7 @@ import (
 )
 
 func New() list.Model {
-	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)
+	l := list.New([]list.Item{}, ItemDelegate{}, 0, 0)
 	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)

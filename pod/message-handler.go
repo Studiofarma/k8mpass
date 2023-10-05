@@ -91,3 +91,16 @@ func NewHandler() *MessageHandler {
 		service: k8mpasskube.PodService{},
 	}
 }
+
+func Route(cmds ...tea.Cmd) []tea.Cmd {
+	var ret []tea.Cmd
+	for _, cmd := range cmds {
+		if cmd == nil {
+			continue
+		}
+		ret = append(ret, func() tea.Msg {
+			return RoutedMsg{Embedded: cmd()}
+		})
+	}
+	return ret
+}

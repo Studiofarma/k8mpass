@@ -155,11 +155,15 @@ func NewHandler(exts ...api.IExtension) *MessageHandler {
 	}
 }
 
-func Route(cmd tea.Cmd) tea.Cmd {
-	return func() tea.Msg {
+func Route(cmds ...tea.Cmd) []tea.Cmd {
+	var ret []tea.Cmd
+	for _, cmd := range cmds {
 		if cmd == nil {
-			return nil
+			continue
 		}
-		return RoutedMsg{cmd()}
+		ret = append(ret, func() tea.Msg {
+			return RoutedMsg{Embedded: cmd()}
+		})
 	}
+	return ret
 }

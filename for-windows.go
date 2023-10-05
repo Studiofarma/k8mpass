@@ -147,8 +147,8 @@ var namespaceOperations = []api.INamespaceOperation{
 }
 
 var namespaceExtensions = []api.IExtension{
-	ReviewAppSleepStatus,
-	//AgeProperty,
+	//ReviewAppSleepStatus,
+	AgeProperty,
 }
 
 var ReviewAppSleepStatus = api.Extension{

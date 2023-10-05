@@ -70,7 +70,7 @@ func (o OperationItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 
 func initializeOperationList() list.Model {
 	var items []list.Item
-	l := list.New(items, OperationItemDelegate{}, pageWidth, pageMaxHeight)
+	l := list.New(items, OperationItemDelegate{}, 0, 0)
 	l.Title = "Namespace operations"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)

@@ -39,4 +39,5 @@ func (m AddedPodMsg) isPodMessage()     {}
 func (m RemovedPodMsg) isPodMessage()   {}
 func (m WatchingPodsMsg) isPodMessage() {}
 func (m NextEventMsg) isPodMessage()    {}
+func (m RoutedMsg) isPodMessage()       {}
 func (m ErrorMsg) isPodMessage()        {}

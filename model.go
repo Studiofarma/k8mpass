@@ -1,14 +1,11 @@
 package main
 
 import (
-	"context"
 	"github.com/studiofarma/k8mpass/api"
-	"runtime"
 	"time"
 
 	"github.com/studiofarma/k8mpass/pod"
 
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/studiofarma/k8mpass/namespace"
 )
@@ -23,13 +20,11 @@ type K8mpassModel struct {
 type modelState int32
 
 const (
-	NamespaceSelection modelState = 1
-	PodSelection       modelState = 3
+	NamespaceSelection modelState = 0
+	PodSelection       modelState = 1
 )
 
 func initialModel(extensions []api.IExtension, operations []api.INamespaceOperation) K8mpassModel {
-	s := spinner.New()
-	s.Spinner = spinner.Line
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
@@ -63,40 +58,18 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
-		}
-	case tea.WindowSizeMsg:
-		var correction int
-		switch runtime.GOOS {
-		case "windows":
-			correction = -1 // -1 is for Windows which doesn't handle the size correctly
 		default:
-			correction = 0
+			switch m.state {
+			case NamespaceSelection:
+				model, cmd := m.namespaceModel.Update(msg)
+				m.namespaceModel = model
+				cmds = append(cmds, cmd)
+			case PodSelection:
+				model, cmd := m.podModel.Update(msg)
+				m.podModel = model
+				cmds = append(cmds, cmd)
+			}
 		}
-		m.namespaceModel.namespaces.SetSize(msg.Width, msg.Height+correction)
-		m.podModel.dimensions = struct {
-			width  int
-			height int
-		}{width: msg.Width, height: msg.Height}
-		m.podModel.UpdateSize()
-		m.podModel.operations.SetWidth(msg.Width)
-		m.podModel.pods.SetSize(msg.Width, msg.Height+correction-m.podModel.operations.Height())
-	case startupMsg:
-		cmds = append(cmds, m.namespaceModel.namespaces.StartSpinner())
-	case clusterConnectedMsg:
-		cmds = append(cmds, m.namespaceModel.messageHandler.GetNamespaces(K8sCluster.kubernetes))
-	case namespaceSelectedMsg:
-		m.podModel.namespace = msg.namespace
-		cmds = append(cmds, m.podModel.Init())
-		cmds = append(cmds, m.podModel.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
-		m.podModel.operations.Title = msg.namespace
-		cmds = append(cmds, m.podModel.operations.StartSpinner())
-		m.state = PodSelection
-	case backToNamespaceSelectionMsg:
-		m.state = NamespaceSelection
-		m.podModel.Reset()
-	}
-	// Model specific messages
-	switch msg.(type) {
 	case namespace.Message:
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
@@ -105,24 +78,39 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		pm, pmCmd := m.podModel.Update(msg)
 		m.podModel = pm
 		cmds = append(cmds, pmCmd)
-	}
-
-	switch m.state {
-	case NamespaceSelection:
-		if _, ok := msg.(namespace.Message); ok {
-			break
-		}
+	default:
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		m.namespaceModel = nm
 		cmds = append(cmds, nmCmd)
-	case PodSelection:
-		if _, ok := msg.(pod.Message); ok {
-			break
-		}
 		pm, pmCmd := m.podModel.Update(msg)
 		m.podModel = pm
 		cmds = append(cmds, pmCmd)
 	}
+
+	switch msg.(type) {
+	case namespaceSelectedMsg:
+		m.state = PodSelection
+	case backToNamespaceSelectionMsg:
+		m.state = NamespaceSelection
+		m.podModel.Reset()
+	}
+
+	//switch m.state {
+	//case NamespaceSelection:
+	//	if _, ok := msg.(namespace.Message); ok {
+	//		break
+	//	}
+	//	nm, nmCmd := m.namespaceModel.Update(msg)
+	//	m.namespaceModel = nm
+	//	cmds = append(cmds, nmCmd)
+	//case PodSelection:
+	//	if _, ok := msg.(pod.Message); ok {
+	//		break
+	//	}
+	//	pm, pmCmd := m.podModel.Update(msg)
+	//	m.podModel = pm
+	//	cmds = append(cmds, pmCmd)
+	//}
 	return m, tea.Batch(cmds...)
 }
 

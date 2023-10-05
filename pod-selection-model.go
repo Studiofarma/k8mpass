@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/studiofarma/k8mpass/api"
@@ -24,13 +25,25 @@ type PodSelectionModel struct {
 }
 
 func (m PodSelectionModel) Init() tea.Cmd {
-	return CheckConditionsThatApply(K8sCluster.kubernetes, m.namespace, m.availableOperations)
+	return nil
 }
 
 func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	var routedCmds []tea.Cmd
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.dimensions = struct {
+			width  int
+			height int
+		}{width: msg.Width, height: msg.Height}
+		m.UpdateSize()
+	case namespaceSelectedMsg:
+		m.namespace = msg.namespace
+		m.operations.Title = msg.namespace
+		cmds = append(cmds, CheckConditionsThatApply(K8sCluster.kubernetes, m.namespace, m.availableOperations))
+		cmds = append(cmds, m.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
+		routedCmds = append(cmds, m.operations.StartSpinner())
 	case pod.WatchingPodsMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.ListMsg:
@@ -103,7 +116,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	om, omCmd := m.operations.Update(msg)
 	m.operations = om
 	cmds = append(cmds, omCmd)
-	cmds = append(cmds, Route(routedCmds...)...)
+	cmds = append(cmds, pod.Route(routedCmds...)...)
 	return m, tea.Batch(cmds...)
 }
 
@@ -130,17 +143,4 @@ func (m *PodSelectionModel) UpdateSize() {
 	m.pods.SetHeight(m.dimensions.height - opsHeight)
 	m.operations.SetWidth(m.dimensions.width)
 	m.pods.SetWidth(m.dimensions.width)
-}
-
-func Route(cmds ...tea.Cmd) []tea.Cmd {
-	var ret []tea.Cmd
-	for _, cmd := range cmds {
-		if cmd == nil {
-			continue
-		}
-		ret = append(ret, func() tea.Msg {
-			return pod.RoutedMsg{Embedded: cmd()}
-		})
-	}
-	return ret
 }
