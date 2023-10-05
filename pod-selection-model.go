@@ -29,6 +29,7 @@ func (m PodSelectionModel) Init() tea.Cmd {
 
 func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	var cmds []tea.Cmd
+	var routedCmds []tea.Cmd
 	switch msg := msg.(type) {
 	case pod.WatchingPodsMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
@@ -102,7 +103,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	om, omCmd := m.operations.Update(msg)
 	m.operations = om
 	cmds = append(cmds, omCmd)
-
+	cmds = append(cmds, Route(routedCmds...)...)
 	return m, tea.Batch(cmds...)
 }
 
@@ -114,15 +115,13 @@ func (m PodSelectionModel) View() string {
 	)
 }
 
-func (m *PodSelectionModel) Reset() tea.Cmd {
-	var cmds []tea.Cmd
+func (m *PodSelectionModel) Reset() {
 	m.operations.ResetSelected()
 	m.pods.ResetSelected()
 	m.operations = initializeOperationList()
 	m.pods = pod.New()
 	m.messageHandler.StopWatching()
 	m.operations.SetHeight(8)
-	return tea.Batch(cmds...)
 }
 
 func (m *PodSelectionModel) UpdateSize() {
@@ -131,4 +130,17 @@ func (m *PodSelectionModel) UpdateSize() {
 	m.pods.SetHeight(m.dimensions.height - opsHeight)
 	m.operations.SetWidth(m.dimensions.width)
 	m.pods.SetWidth(m.dimensions.width)
+}
+
+func Route(cmds ...tea.Cmd) []tea.Cmd {
+	var ret []tea.Cmd
+	for _, cmd := range cmds {
+		if cmd == nil {
+			continue
+		}
+		ret = append(ret, func() tea.Msg {
+			return pod.RoutedMsg{Embedded: cmd()}
+		})
+	}
+	return ret
 }

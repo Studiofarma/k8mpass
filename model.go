@@ -93,7 +93,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = PodSelection
 	case backToNamespaceSelectionMsg:
 		m.state = NamespaceSelection
-		cmds = append(cmds, m.podModel.Reset())
+		m.podModel.Reset()
 	}
 	// Model specific messages
 	switch msg.(type) {

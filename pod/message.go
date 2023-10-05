@@ -1,5 +1,7 @@
 package pod
 
+import tea "github.com/charmbracelet/bubbletea"
+
 type Message interface {
 	isPodMessage()
 }
@@ -27,6 +29,10 @@ type WatchingPodsMsg struct{}
 
 type ErrorMsg struct {
 	Err error
+}
+
+type RoutedMsg struct {
+	Embedded tea.Msg
 }
 
 func (m AddedPodMsg) isPodMessage()     {}
