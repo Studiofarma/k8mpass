@@ -44,7 +44,10 @@ func (p *PinnedNamespaceService) Unpin(ns string) error {
 	p.namespaces = slices.DeleteFunc(p.namespaces, func(s string) bool {
 		return s == ns
 	})
-	RemoveLineFromFile(ns)
+	err := RemoveLineFromFile(ns)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -73,7 +76,7 @@ func RemoveLineFromFile(ns string) error {
 	}
 	configPath := filepath.Join(userHomeDir, ".k8mpass", "config.txt")
 
-	readFile, err := os.OpenFile(configPath, os.O_RDWR|os.O_APPEND, 0660)
+	readFile, err := os.OpenFile(configPath, os.O_WRONLY, 0660)
 	if err != nil {
 		return err
 	}
