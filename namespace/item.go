@@ -10,6 +10,7 @@ import (
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"log"
+	"slices"
 )
 
 type Item struct {
@@ -44,7 +45,9 @@ func (n *Item) LoadCustomProperties(properties ...api.INamespaceExtension) {
 	}
 }
 
-type ItemDelegate struct{}
+type ItemDelegate struct {
+	Pinned []string
+}
 
 func (n ItemDelegate) Height() int {
 	return 1
@@ -72,9 +75,12 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	namespace := i.K8sNamespace.Name
 	propertiesStyle := customPropertiesStyle.Copy()
-	style := unselectedItemStyle
+	style := unselectedItemStyle.Copy()
+	if slices.Contains(n.Pinned, namespace) {
+		style = pinnedStyle.Copy()
+	}
 	if index == m.Index() {
-		style = selectedItemStyle
+		style = style.Inherit(selectedItemStyle.Copy())
 		style = style.Background(lipgloss.Color("#444852"))
 		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -11,6 +12,7 @@ import (
 
 type NamespaceSelectionModel struct {
 	messageHandler *namespace.MessageHandler
+	pinnedService  *PinnedNamespaceService
 	namespaces     list.Model
 }
 
@@ -36,7 +38,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		for i, ns := range msg.Namespaces {
 			items[i] = ns
 		}
-		routedCmds = append(routedCmds, m.namespaces.SetItems(items))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(items, m.pinnedService.namespaces)))
 		m.WorkaroundForGraphicalBug()
 		m.namespaces.StopSpinner()
 		m.namespaces.Title = "Select a namespace"
@@ -46,7 +48,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
-		routedCmds = append(routedCmds, m.namespaces.SetItems(ns))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.pinnedService.namespaces)))
 		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
@@ -101,6 +103,26 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			} else {
 				panic("Casting went wrong")
 			}
+		case "p":
+			err := m.pinnedService.Pin(m.namespaces.SelectedItem().FilterValue())
+			if err != nil {
+				routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Error while pinning"))
+			} else {
+				m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.pinnedService.GetNamespaces()})
+				routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.pinnedService.namespaces)))
+			}
+		case "u":
+			err := m.pinnedService.Unpin(m.namespaces.SelectedItem().FilterValue())
+			if err != nil {
+				routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Error while pinning"))
+			} else {
+				ns := m.namespaces.Items()
+				sort.SliceStable(ns, func(i, j int) bool {
+					return ns[i].FilterValue() < ns[j].FilterValue()
+				})
+				m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.pinnedService.GetNamespaces()})
+				routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.pinnedService.namespaces)))
+			}
 		}
 	}
 	switch msg := msg.(type) {
@@ -131,6 +153,25 @@ func (m NamespaceSelectionModel) View() string {
 func (m *NamespaceSelectionModel) Reset() {
 	m.namespaces.ResetSelected()
 	m.namespaces.ResetFilter()
+}
+
+func SortWithFavourites(items []list.Item, pinned []string) []list.Item {
+	sortedNames := pinned
+	for _, item := range items {
+		if slices.Contains(pinned, item.FilterValue()) {
+			continue
+		}
+		sortedNames = append(sortedNames, item.FilterValue())
+	}
+	mappedItems := make(map[string]list.Item)
+	for _, item := range items {
+		mappedItems[item.FilterValue()] = item
+	}
+	var res []list.Item
+	for _, n := range sortedNames {
+		res = append(res, mappedItems[n])
+	}
+	return res
 }
 
 // This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405

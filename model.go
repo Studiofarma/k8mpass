@@ -24,11 +24,12 @@ const (
 	PodSelection       modelState = 1
 )
 
-func initialModel(plugins api.IPlugins) K8mpassModel {
+func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) K8mpassModel {
 	return K8mpassModel{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
-			namespaces: namespace.New(),
+			namespaces:    namespace.New(configService.GetNamespaces()),
+			pinnedService: &configService,
 			messageHandler: namespace.NewHandler(
 				plugins.GetNamespaceExtensions()...,
 			),

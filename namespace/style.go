@@ -23,6 +23,10 @@ var (
 				MarginLeft(2)
 	unselectedItemStyle = lipgloss.NewStyle().
 				MarginLeft(2)
+	pinnedStyle = lipgloss.NewStyle().
+			MarginLeft(2).
+			Foreground(lipgloss.Color("#fac65f"))
+
 	terminatingNamespace = lipgloss.NewStyle().
 				MarginLeft(2).
 				Foreground(lipgloss.Color("#6b6b6b"))
