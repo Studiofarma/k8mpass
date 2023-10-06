@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 )
 
@@ -24,5 +25,20 @@ func New(pinned []string) list.Model {
 	l.KeyMap.CursorDown.SetHelp("↓", "down")
 	l.KeyMap.NextPage.SetHelp("→", "right")
 	l.KeyMap.PrevPage.SetHelp("←", "left")
+	additionalKeys := func() []key.Binding {
+		return []key.Binding{
+			key.NewBinding(
+				key.WithKeys("p"),
+				key.WithHelp("p", "pin"),
+			),
+			key.NewBinding(
+				key.WithKeys("u"),
+				key.WithHelp("u", "unpin"),
+			),
+		}
+	}
+
+	l.AdditionalFullHelpKeys = additionalKeys
+	l.AdditionalShortHelpKeys = additionalKeys
 	return l
 }
