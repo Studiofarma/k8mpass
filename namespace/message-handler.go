@@ -154,14 +154,22 @@ func NewHandler(exts ...api.INamespaceExtension) *MessageHandler {
 	}
 }
 
-func Route(cmds ...tea.Cmd) []tea.Cmd {
-	var ret []tea.Cmd
+func Route(cmds []tea.Cmd) []tea.Cmd {
+	var filteredCmds []tea.Cmd
 	for _, cmd := range cmds {
-		if cmd == nil {
-			continue
+		if cmd != nil {
+			filteredCmds = append(filteredCmds, cmd)
 		}
+	}
+	var ret []tea.Cmd
+	for _, cmd := range filteredCmds {
 		ret = append(ret, func() tea.Msg {
-			return RoutedMsg{Embedded: cmd()}
+			result := cmd()
+			if result == nil {
+				return nil
+			} else {
+				return RoutedMsg{Embedded: result}
+			}
 		})
 	}
 	return ret

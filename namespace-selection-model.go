@@ -26,9 +26,9 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	case tea.WindowSizeMsg:
 		m.namespaces.SetSize(msg.Width, msg.Height)
 	case startupMsg:
-		routedCmds = append(cmds, m.namespaces.StartSpinner())
+		routedCmds = append(routedCmds, m.namespaces.StartSpinner())
 	case clusterConnectedMsg:
-		cmds = append(routedCmds, m.messageHandler.GetNamespaces(K8sCluster.kubernetes))
+		cmds = append(cmds, m.messageHandler.GetNamespaces(K8sCluster.kubernetes))
 	case namespace.WatchingMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		cmds = append(cmds, namespace.Refresh())
@@ -37,28 +37,28 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		for i, ns := range msg.Namespaces {
 			items[i] = ns
 		}
-		cmds = append(routedCmds, m.namespaces.SetItems(items))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(items))
 		m.namespaces.StopSpinner()
 		m.namespaces.SetShowPagination(true) //This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405
 		m.namespaces.Title = "Select a namespace"
 	case namespace.AddedMsg:
-		cmds = append(routedCmds, m.namespaces.InsertItem(0, msg.Namespace))
+		_ = m.namespaces.InsertItem(0, msg.Namespace)
 		ns := m.namespaces.Items()
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
-		cmds = append(routedCmds, m.namespaces.SetItems(ns))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(ns))
 		cmds = append(cmds, m.messageHandler.NextEvent)
-		cmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
+		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.ModifiedMsg:
 		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
-		cmds = append(routedCmds, m.namespaces.SetItem(idx, msg.Namespace))
+		routedCmds = append(routedCmds, m.namespaces.SetItem(idx, msg.Namespace))
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case namespace.RemovedMsg:
 		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
 		m.namespaces.RemoveItem(idx)
 		cmds = append(cmds, m.messageHandler.NextEvent)
-		cmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Namespace.K8sNamespace.Name)))
+		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.NextEventMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case namespace.ErrorMsg:
@@ -81,14 +81,14 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 				items[idx] = ns
 			}
 		}
-		cmds = append(routedCmds, m.namespaces.SetItems(items))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(items))
 		cmds = append(cmds, namespace.Refresh())
-		cmds = append(routedCmds, m.namespaces.NewStatusMessage("Reloaded"))
+		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Reloaded"))
 		log.Printf("Namespace - Width: %d; Height: %d", m.namespaces.Width(), m.namespaces.Height())
-	case namespace.RoutedMsg:
-		model, cmd := m.namespaces.Update(msg.Embedded)
-		m.namespaces = model
-		cmds = append(routedCmds, cmd)
+	//case namespace.RoutedMsg:
+	//	model, cmd := m.namespaces.Update(msg.Embedded)
+	//	m.namespaces = model
+	//	routedCmds = append(routedCmds, cmd)
 	case tea.KeyMsg:
 		if m.namespaces.FilterState() == list.Filtering {
 			break
@@ -107,11 +107,22 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			}
 		}
 	}
+	switch msg := msg.(type) {
+	case namespace.RoutedMsg:
+		if batchMsg, ok := msg.Embedded.(tea.BatchMsg); ok {
+			routedCmds = append(routedCmds, batchMsg...)
+			break
+		}
+		lm, lmCmd := m.namespaces.Update(msg.Embedded)
+		m.namespaces = lm
+		routedCmds = append(routedCmds, lmCmd)
+	default:
+		lm, lmCmd := m.namespaces.Update(msg)
+		m.namespaces = lm
+		routedCmds = append(routedCmds, lmCmd)
+	}
 
-	lm, lmCmd := m.namespaces.Update(msg)
-	m.namespaces = lm
-	cmds = append(cmds, lmCmd)
-	cmds = append(cmds, namespace.Route(routedCmds...)...)
+	cmds = append(cmds, namespace.Route(routedCmds)...)
 	return m, tea.Batch(cmds...)
 }
 

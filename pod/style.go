@@ -8,6 +8,8 @@ import (
 var (
 	pageHeight = 20
 	pageWidth  = 80
+
+	maxPodNameLength uint = 40
 )
 
 var (
@@ -31,7 +33,7 @@ var (
 )
 
 func podStyle(status v1.PodStatus, width int) lipgloss.Style {
-	style := lipgloss.NewStyle().Width(width + 3)
+	style := lipgloss.NewStyle().Width(width + 3).PaddingRight(1)
 	switch status.Phase {
 	case v1.PodRunning:
 		var ready = true

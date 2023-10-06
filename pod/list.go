@@ -12,7 +12,7 @@ func New() list.Model {
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(true)
 	l.Title = "Pods"
-	l.SetShowTitle(false)
+	l.SetShowTitle(true)
 	l.Styles.Title = titleStyle
 	l.SetStatusBarItemName("pod", "pods")
 	l.StatusMessageLifetime = 3 * time.Second
@@ -32,6 +32,10 @@ func New() list.Model {
 			key.NewBinding(
 				key.WithKeys("backspace", "esc"),
 				key.WithHelp("backspace/esc", "back"),
+			),
+			key.NewBinding(
+				key.WithKeys("tab"),
+				key.WithHelp("tab", "switch focus"),
 			),
 		}
 	}

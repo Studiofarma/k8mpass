@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
 	"github.com/studiofarma/k8mpass/api"
@@ -13,32 +14,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 )
 
-func Age(ns v1.Namespace) (string, error) {
-	res := fmt.Sprintf("Age: %0.f minutes", time.Since(ns.CreationTimestamp.Time).Minutes())
-	return res, nil
+func NamespaceAge(ns v1.Namespace) (string, error) {
+	return ResourceAge(ns.CreationTimestamp.Time), nil
 }
 
-func AgeList(ns []v1.Namespace) map[string]string {
+func NamespaceAgeList(ns []v1.Namespace) map[string]string {
 	values := make(map[string]string)
 	for _, n := range ns {
-		age, _ := Age(n)
+		age, _ := NamespaceAge(n)
 		values[n.Name] = age
 	}
 	return values
 }
 
-var AgeProperty = api.NamespaceExtension{
+var NamespaceAgeProperty = api.NamespaceExtension{
 	Name:         "age",
-	ExtendSingle: Age,
-	ExtendList:   AgeList,
+	ExtendSingle: NamespaceAge,
+	ExtendList:   NamespaceAgeList,
 }
 
 var OpenApplicationOperation = api.NamespaceOperation{
@@ -132,6 +134,12 @@ const (
 	awake    = "Awake!"
 )
 
+var Plugins = api.Plugins{
+	NamespaceExtensions: namespaceExtensions,
+	NamespaceOperations: namespaceOperations,
+	PodExtensions:       podExtensions,
+}
+
 func GetNamespaceExtensions() []api.INamespaceExtension {
 	return namespaceExtensions
 }
@@ -148,7 +156,12 @@ var namespaceOperations = []api.INamespaceOperation{
 
 var namespaceExtensions = []api.INamespaceExtension{
 	//ReviewAppSleepStatus,
-	AgeProperty,
+	NamespaceAgeProperty,
+}
+
+var podExtensions = []api.IPodExtension{
+	PodVersion,
+	PodAgeProperty,
 }
 
 var ReviewAppSleepStatus = api.NamespaceExtension{
@@ -399,4 +412,82 @@ func Openbrowser(url string) {
 		log.Fatal(err)
 	}
 
+}
+
+var PodAgeProperty = api.PodExtension{
+	Name:         "age",
+	ExtendSingle: PodAge,
+	ExtendList:   PodAgeList,
+}
+
+func ResourceAge(creation time.Time) string {
+	t := time.Now().Sub(creation)
+	var res float64
+	var unit string
+	if t.Minutes() < 60 {
+		res = t.Minutes()
+		unit = "m"
+	} else if t.Hours() < 24 {
+		res = t.Hours()
+		unit = "h"
+	} else {
+		res = t.Hours() / 24
+		unit = "d"
+	}
+	s := fmt.Sprintf("%0.f%s", math.Floor(res), unit)
+	return s
+
+}
+
+func PodAge(pod v1.Pod) (string, error) {
+	return ResourceAge(pod.CreationTimestamp.Time), nil
+}
+
+func PodAgeList(pods []v1.Pod) map[string]string {
+	res := make(map[string]string, len(pods))
+	for _, pod := range pods {
+		property, err := PodAge(pod)
+		if err != nil {
+			continue
+		}
+		res[pod.Name] = property
+	}
+	return res
+}
+
+var apps = []string{"backend", "sf-full", "spring-batch-ita", "spring-batch-deu"}
+
+var PodVersion = api.PodExtension{
+	Name:         "version",
+	ExtendSingle: PodVersionSingle,
+	ExtendList:   PodVersionList,
+}
+
+func PodVersionSingle(pod v1.Pod) (string, error) {
+	if !slices.Contains(apps, pod.Labels["app"]) {
+		return "", nil
+	}
+	appVersion := pod.Labels["AppVersion"]
+	if appVersion == "" {
+		appVersion = pod.Annotations["AppVersion"]
+	}
+	version, err := semver.NewVersion(appVersion)
+	if err != nil {
+		return "", nil
+	}
+	if version.Major() > 0 {
+		return fmt.Sprintf("(v%s)", version.String()), nil
+	}
+	return fmt.Sprintf("(%s)", version.Prerelease()), nil
+}
+func PodVersionList(ns []v1.Pod) map[string]string {
+	res := make(map[string]string, len(ns))
+	for _, n := range ns {
+		ext, err := PodVersionSingle(n)
+		if err != nil {
+			continue
+		}
+		res[n.Name] = ext
+	}
+	return res
 }

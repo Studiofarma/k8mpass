@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/studiofarma/k8mpass/api"
 	"sort"
@@ -68,12 +67,12 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		})
 		cmds = append(cmds, m.pods.SetItems(ns))
 		cmds = append(cmds, m.messageHandler.NextEvent)
-		cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Pod.K8sPod.Name)))
+		//cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Pod.K8sPod.Name)))
 	case pod.RemovedPodMsg:
 		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
 		m.pods.RemoveItem(idx)
 		cmds = append(cmds, m.messageHandler.NextEvent)
-		cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Pod.K8sPod.Name)))
+		//cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Pod.K8sPod.Name)))
 	case pod.ModifiedPodMsg:
 		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
 		cmds = append(cmds, m.pods.SetItem(idx, msg.Pod))
@@ -89,8 +88,12 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		}
 		cmd := m.operations.SetItems(ops)
 		cmds = append(cmds, cmd)
-		m.UpdateSize()
 		m.operations.StopSpinner()
+		if len(msg.Operations) == 0 {
+			m.focus = pods
+			m.pods.SetDelegate(pod.ItemDelegate{IsFocused: true})
+			m.operations.SetDelegate(OperationItemDelegate{IsFocused: false})
+		}
 	case api.NoOutputResultMsg:
 		var style lipgloss.Style
 		if msg.Success {
@@ -125,6 +128,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				m.pods.SetDelegate(pod.ItemDelegate{IsFocused: true})
 				m.operations.SetDelegate(OperationItemDelegate{IsFocused: false})
 			case pods:
+				if len(m.operations.Items()) == 0 {
+					break
+				}
 				m.focus = operations
 				m.pods.SetDelegate(pod.ItemDelegate{IsFocused: false})
 				m.operations.SetDelegate(OperationItemDelegate{IsFocused: true})
@@ -172,6 +178,8 @@ func (m *PodSelectionModel) Reset() {
 	m.pods.ResetSelected()
 	m.operations = initializeOperationList()
 	m.pods = pod.New()
+	m.focus = operations
+	m.UpdateSize()
 	m.messageHandler.StopWatching()
 }
 

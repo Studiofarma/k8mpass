@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/truncate"
 	"io"
 	v1 "k8s.io/api/core/v1"
 )
@@ -37,6 +38,10 @@ func (n ItemDelegate) Spacing() int {
 }
 
 func (n ItemDelegate) Update(_ tea.Msg, m *list.Model) tea.Cmd {
+	selectedItem := m.SelectedItem()
+	if selectedItem != nil {
+		m.Title = selectedItem.FilterValue()
+	}
 	if len(m.Items()) == 0 {
 		m.SetShowStatusBar(false)
 	} else {
@@ -50,24 +55,22 @@ func (n ItemDelegate) Render(w io.Writer, l list.Model, index int, listItem list
 	if !ok {
 		return
 	}
-	maxLength := 0
-	for _, item := range l.VisibleItems() {
-		maxLength = max(maxLength, len(item.FilterValue()))
-	}
-	style := podStyle(i.K8sPod.Status, maxLength)
+	propertyWidth := uint(15)
+	style := podStyle(i.K8sPod.Status, int(maxPodNameLength))
 	propertiesStyle := customPropertiesStyle.Copy()
 	if n.IsFocused && index == l.Index() {
 		style = style.Background(lipgloss.Color("#444852"))
 		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
+		propertyWidth = uint(20)
 	}
 	customProperties := ""
 	for _, property := range i.ExtendedProperties {
-		if property.Value == "" {
-			continue
-		}
-		customProperties += propertiesStyle.Render(property.Value)
+		truncatedProperty := truncate.StringWithTail(property.Value, propertyWidth, "...")
+		prop := lipgloss.PlaceHorizontal(15, lipgloss.Left, truncatedProperty)
+		customProperties += propertiesStyle.Render(prop)
 	}
-	_, _ = fmt.Fprintf(w, "  %s%s", style.Render(i.K8sPod.Name), customProperties)
+	truncatedName := truncate.StringWithTail(i.K8sPod.Name, maxPodNameLength, "...")
+	_, _ = fmt.Fprintf(w, "  %s%s", style.Render(truncatedName), customProperties)
 }
 
 func FindPod(items []list.Item, search Item) int {
