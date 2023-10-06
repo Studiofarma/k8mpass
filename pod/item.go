@@ -55,22 +55,19 @@ func (n ItemDelegate) Render(w io.Writer, l list.Model, index int, listItem list
 	if !ok {
 		return
 	}
-	propertyWidth := uint(15)
-	style := podStyle(i.K8sPod.Status, int(maxPodNameLength))
+	propertyWidth := 12
+	style := podStyle(i.K8sPod.Status, maxPodNameLength)
 	propertiesStyle := customPropertiesStyle.Copy()
 	if n.IsFocused && index == l.Index() {
 		style = style.Background(lipgloss.Color("#444852"))
 		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
-		propertyWidth = uint(20)
 	}
 	customProperties := ""
 	for _, property := range i.ExtendedProperties {
-		truncatedProperty := truncate.StringWithTail(property.Value, propertyWidth, "...")
-		prop := lipgloss.PlaceHorizontal(15, lipgloss.Left, truncatedProperty)
+		prop := lipgloss.PlaceHorizontal(propertyWidth, lipgloss.Left, ellipsis(property.Value, propertyWidth))
 		customProperties += propertiesStyle.Render(prop)
 	}
-	truncatedName := truncate.StringWithTail(i.K8sPod.Name, maxPodNameLength, "...")
-	_, _ = fmt.Fprintf(w, "  %s%s", style.Render(truncatedName), customProperties)
+	_, _ = fmt.Fprintf(w, "  %s%s", style.Render(ellipsis(i.K8sPod.Name, maxPodNameLength)), customProperties)
 }
 
 func FindPod(items []list.Item, search Item) int {
@@ -83,4 +80,11 @@ func FindPod(items []list.Item, search Item) int {
 		}
 	}
 	return idx
+}
+
+func ellipsis(s string, length int) string {
+	if len(s) > length {
+		return truncate.StringWithTail(s, uint(length), "..")
+	}
+	return s
 }

@@ -24,6 +24,12 @@ import (
 	"time"
 )
 
+var Plugins = api.Plugins{
+	NamespaceExtensions: namespaceExtensions,
+	NamespaceOperations: namespaceOperations,
+	PodExtensions:       podExtensions,
+}
+
 func NamespaceAge(ns v1.Namespace) (string, error) {
 	return ResourceAge(ns.CreationTimestamp.Time), nil
 }
@@ -133,12 +139,6 @@ const (
 	sleeping = "Sleeping..."
 	awake    = "Awake!"
 )
-
-var Plugins = api.Plugins{
-	NamespaceExtensions: namespaceExtensions,
-	NamespaceOperations: namespaceOperations,
-	PodExtensions:       podExtensions,
-}
 
 func GetNamespaceExtensions() []api.INamespaceExtension {
 	return namespaceExtensions

@@ -88,7 +88,7 @@ func (nh *MessageHandler) ReloadExtensions(namespaces []Item) tea.Cmd {
 }
 
 func Refresh() tea.Cmd {
-	return tea.Tick(time.Minute, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*5, func(t time.Time) tea.Msg {
 		return ReloadTick{}
 	})
 }
@@ -155,16 +155,14 @@ func NewHandler(exts ...api.INamespaceExtension) *MessageHandler {
 }
 
 func Route(cmds []tea.Cmd) []tea.Cmd {
-	var filteredCmds []tea.Cmd
-	for _, cmd := range cmds {
-		if cmd != nil {
-			filteredCmds = append(filteredCmds, cmd)
-		}
-	}
 	var ret []tea.Cmd
-	for _, cmd := range filteredCmds {
+	for _, cmd := range cmds {
+		fn := cmd //This is needed to avoid passing the reference to the iteration element, in which case all the functions would point to the last cmd in the iteration
+		if fn == nil {
+			continue
+		}
 		ret = append(ret, func() tea.Msg {
-			result := cmd()
+			result := fn()
 			if result == nil {
 				return nil
 			} else {

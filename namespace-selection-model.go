@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -38,8 +37,8 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			items[i] = ns
 		}
 		routedCmds = append(routedCmds, m.namespaces.SetItems(items))
+		m.WorkaroundForGraphicalBug()
 		m.namespaces.StopSpinner()
-		m.namespaces.SetShowPagination(true) //This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405
 		m.namespaces.Title = "Select a namespace"
 	case namespace.AddedMsg:
 		_ = m.namespaces.InsertItem(0, msg.Namespace)
@@ -48,11 +47,13 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
 		routedCmds = append(routedCmds, m.namespaces.SetItems(ns))
+		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.ModifiedMsg:
 		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
 		routedCmds = append(routedCmds, m.namespaces.SetItem(idx, msg.Namespace))
+		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case namespace.RemovedMsg:
 		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
@@ -82,13 +83,8 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			}
 		}
 		routedCmds = append(routedCmds, m.namespaces.SetItems(items))
-		cmds = append(cmds, namespace.Refresh())
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Reloaded"))
-		log.Printf("Namespace - Width: %d; Height: %d", m.namespaces.Width(), m.namespaces.Height())
-	//case namespace.RoutedMsg:
-	//	model, cmd := m.namespaces.Update(msg.Embedded)
-	//	m.namespaces = model
-	//	routedCmds = append(routedCmds, cmd)
+		cmds = append(cmds, namespace.Refresh())
 	case tea.KeyMsg:
 		if m.namespaces.FilterState() == list.Filtering {
 			break
@@ -110,7 +106,9 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	switch msg := msg.(type) {
 	case namespace.RoutedMsg:
 		if batchMsg, ok := msg.Embedded.(tea.BatchMsg); ok {
-			routedCmds = append(routedCmds, batchMsg...)
+			cmds = append(routedCmds, func() tea.Msg {
+				return batchMsg
+			})
 			break
 		}
 		lm, lmCmd := m.namespaces.Update(msg.Embedded)
@@ -133,4 +131,9 @@ func (m NamespaceSelectionModel) View() string {
 func (m *NamespaceSelectionModel) Reset() {
 	m.namespaces.ResetSelected()
 	m.namespaces.ResetFilter()
+}
+
+// This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405
+func (m *NamespaceSelectionModel) WorkaroundForGraphicalBug() {
+	m.namespaces.SetShowPagination(true)
 }

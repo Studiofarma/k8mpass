@@ -9,7 +9,7 @@ var (
 	pageHeight = 20
 	pageWidth  = 80
 
-	maxPodNameLength uint = 40
+	maxPodNameLength = 40
 )
 
 var (
