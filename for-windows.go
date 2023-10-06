@@ -155,7 +155,7 @@ var namespaceOperations = []api.INamespaceOperation{
 }
 
 var namespaceExtensions = []api.INamespaceExtension{
-	//ReviewAppSleepStatus,
+	ReviewAppSleepStatus,
 	NamespaceAgeProperty,
 }
 

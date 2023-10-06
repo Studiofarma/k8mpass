@@ -20,8 +20,7 @@ var (
 				PaddingLeft(4).
 				Foreground(lipgloss.Color("#7d7d7d"))
 	selectedItemStyle = lipgloss.NewStyle().
-				MarginLeft(2).
-				Foreground(lipgloss.Color("170"))
+				MarginLeft(2)
 	unselectedItemStyle = lipgloss.NewStyle().
 				MarginLeft(2)
 	terminatingNamespace = lipgloss.NewStyle().

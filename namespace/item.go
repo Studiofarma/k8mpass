@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/truncate"
 	"github.com/studiofarma/k8mpass/api"
 	"io"
 	v1 "k8s.io/api/core/v1"
@@ -63,21 +65,28 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	}
 
 	maxLength := 0
+	propertyWidth := 12
 	for _, item := range m.VisibleItems() {
 		maxLength = max(maxLength, len(item.FilterValue()))
 	}
 
 	namespace := i.K8sNamespace.Name
-	customProperties := ""
-	for _, property := range i.ExtendedProperties {
-		customProperties += customPropertiesStyle.Render(fmt.Sprintf(property.Value))
-	}
+	propertiesStyle := customPropertiesStyle.Copy()
 	style := unselectedItemStyle
-	if i.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
-		style = terminatingNamespace
-	}
 	if index == m.Index() {
 		style = selectedItemStyle
+		style = style.Background(lipgloss.Color("#444852"))
+		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
+	}
+
+	customProperties := ""
+	for _, property := range i.ExtendedProperties {
+		prop := lipgloss.PlaceHorizontal(propertyWidth, lipgloss.Left, ellipsis(property.Value, propertyWidth))
+		customProperties += propertiesStyle.Render(prop)
+	}
+
+	if i.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
+		style = terminatingNamespace
 	}
 
 	_, _ = fmt.Fprint(w, style.Width(maxLength+3).Render(namespace)+customProperties)
@@ -93,4 +102,11 @@ func FindNamespace(items []list.Item, search Item) int {
 		}
 	}
 	return idx
+}
+
+func ellipsis(s string, length int) string {
+	if len(s) > length {
+		return truncate.StringWithTail(s, uint(length), "..")
+	}
+	return s
 }

@@ -88,7 +88,7 @@ func (nh *MessageHandler) ReloadExtensions(namespaces []Item) tea.Cmd {
 }
 
 func Refresh() tea.Cmd {
-	return tea.Tick(time.Second*5, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Minute, func(t time.Time) tea.Msg {
 		return ReloadTick{}
 	})
 }
@@ -108,7 +108,7 @@ func LoadExtensions(extensions []api.INamespaceExtension, res []v1.Namespace) []
 			}
 			p := Property{
 				Key:   e.GetName(),
-				Value: string(value),
+				Value: value,
 				Order: idx,
 			}
 			namespaceProperties[namespaceName(ns)] = append(namespaceProperties[namespaceName(ns)], p)
@@ -133,15 +133,15 @@ func GetReloadedExtensions(extensions []api.INamespaceExtension, res []Item) map
 		}
 		nsToValue := fn(v1Namespaces)
 		for ns, value := range nsToValue {
-			if namespaceProperties[string(ns)] == nil {
-				namespaceProperties[string(ns)] = make([]Property, 0)
+			if namespaceProperties[ns] == nil {
+				namespaceProperties[ns] = make([]Property, 0)
 			}
 			p := Property{
 				Key:   e.GetName(),
-				Value: string(value),
+				Value: value,
 				Order: idx,
 			}
-			namespaceProperties[string(ns)] = append(namespaceProperties[string(ns)], p)
+			namespaceProperties[ns] = append(namespaceProperties[ns], p)
 		}
 	}
 	return namespaceProperties
