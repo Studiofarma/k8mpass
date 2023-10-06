@@ -76,7 +76,7 @@ func RemoveLineFromFile(ns string) error {
 	}
 	configPath := filepath.Join(userHomeDir, ".k8mpass", "config.txt")
 
-	readFile, err := os.OpenFile(configPath, os.O_WRONLY, 0660)
+	readFile, err := os.OpenFile(configPath, os.O_RDWR, 0660)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func RemoveLineFromFile(ns string) error {
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		if line != ns {
-			buf.WriteString(ns + "\n")
+			buf.WriteString(line + "\n")
 		}
 	}
 	err = readFile.Truncate(0)
