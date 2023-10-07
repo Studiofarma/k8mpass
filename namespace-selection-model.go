@@ -174,7 +174,7 @@ func SortWithFavourites(items []list.Item, pinned []string) []list.Item {
 	return res
 }
 
-// This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405
+// WorkaroundForGraphicalBug This is needed to overcome an annoying graphical bug https://github.com/charmbracelet/bubbles/issues/405
 func (m *NamespaceSelectionModel) WorkaroundForGraphicalBug() {
 	m.namespaces.SetShowPagination(true)
 }

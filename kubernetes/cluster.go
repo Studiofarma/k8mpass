@@ -30,14 +30,7 @@ func (c *Cluster) Connect() error {
 }
 
 func getConnection() (*kubernetes.Clientset, error) {
-	var configPath string
-	if f := configPathFromFlag(); f != "" {
-		configPath = f
-	} else if e := configPathFromEnvVar(); e != "" {
-		configPath = e
-	} else {
-		configPath = defaultKubeConfigFilePath()
-	}
+	configPath := getConfigPath()
 	// To add a minimum spinner time
 	sleep := time.NewTimer(time.Millisecond * 500).C
 
@@ -55,6 +48,18 @@ func getConnection() (*kubernetes.Clientset, error) {
 	}
 	<-sleep
 	return cs, nil
+}
+
+func getConfigPath() string {
+	var configPath string
+	if f := configPathFromFlag(); f != "" {
+		configPath = f
+	} else if e := configPathFromEnvVar(); e != "" {
+		configPath = e
+	} else {
+		configPath = defaultKubeConfigFilePath()
+	}
+	return configPath
 }
 
 func healthCheck(cs *kubernetes.Clientset) error {
@@ -84,7 +89,7 @@ func configPathFromEnvVar() string {
 func configPathFromFlag() string {
 	path := flag.String("kubeconfig", "", "specify kubernetes config file to use")
 	flag.Parse()
-	if path != nil {
+	if path == nil {
 		return *path
 	}
 	return ""
