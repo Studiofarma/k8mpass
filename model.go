@@ -10,22 +10,22 @@ import (
 	"github.com/studiofarma/k8mpass/namespace"
 )
 
-type K8mpassModel struct {
+type Model struct {
 	error          errMsg
-	state          modelState
+	state          state
 	namespaceModel NamespaceSelectionModel
 	podModel       PodSelectionModel
 }
 
-type modelState int32
+type state int32
 
 const (
-	NamespaceSelection modelState = 0
-	PodSelection       modelState = 1
+	NamespaceSelection state = 0
+	PodSelection       state = 1
 )
 
-func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) K8mpassModel {
-	return K8mpassModel{
+func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Model {
+	return Model{
 		state: NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces:    namespace.New(configService.GetNamespaces()),
@@ -44,13 +44,13 @@ func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) K8
 	}
 }
 
-func (m K8mpassModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(clusterConnect, func() tea.Msg {
 		return startupMsg{}
 	})
 }
 
-func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case errMsg:
@@ -100,7 +100,7 @@ func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m K8mpassModel) View() string {
+func (m Model) View() string {
 	if m.error != nil {
 		return m.error.Error()
 	}
