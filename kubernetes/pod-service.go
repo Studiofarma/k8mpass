@@ -12,7 +12,7 @@ import (
 type IPodService interface {
 	GetPods(namespace string) (*v1.PodList, error)
 	GetPodEvent() PodEvent
-	WatchPods(namespace string, resourceVersion string) error
+	WatchPods(ctx context.Context, namespace string, resourceVersion string) error
 	StopWatchingPods()
 	RunK8mpassCondition(fn api.K8mpassCondition, namespace string) bool
 	RunK8mpassCommand(fn api.K8mpassCommand, namespace string) tea.Cmd
@@ -28,7 +28,7 @@ func (c *Cluster) GetPods(namespace string) (*v1.PodList, error) {
 
 func (c *Cluster) GetPodEvent() PodEvent {
 	e, closed := <-c.podWatch.ResultChan()
-	if closed {
+	if !closed {
 		return PodEvent{
 			Type: Closed,
 		}
@@ -53,7 +53,7 @@ func (c *Cluster) GetPodEvent() PodEvent {
 		return PodEvent{
 			Type: Unhandled,
 		}
-	case watch.Error:
+	case watch.Error, "":
 		return PodEvent{
 			Type: Error,
 		}
@@ -63,14 +63,15 @@ func (c *Cluster) GetPodEvent() PodEvent {
 
 }
 
-func (c *Cluster) WatchPods(namespace string, resourceVersion string) error {
+func (c *Cluster) WatchPods(ctx context.Context, namespace string, resourceVersion string) error {
 	opt := metav1.ListOptions{
 		ResourceVersion: resourceVersion,
 	}
-	watcher, err := c.cs.CoreV1().Pods(namespace).Watch(context.TODO(), opt)
+	watcher, err := c.cs.CoreV1().Pods(namespace).Watch(ctx, opt)
 	if err != nil {
 		return err
 	}
+
 	c.podWatch = watcher
 	return nil
 }

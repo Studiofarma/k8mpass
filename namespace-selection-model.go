@@ -29,6 +29,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	case startupMsg:
 		routedCmds = append(routedCmds, m.namespaces.StartSpinner())
 	case clusterConnectedMsg:
+		m.namespaces.Title = msg.context
 		cmds = append(cmds, m.messageHandler.GetNamespaces())
 	case namespace.WatchingMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
@@ -41,7 +42,6 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(items, m.pinnedService.namespaces)))
 		m.WorkaroundForGraphicalBug()
 		m.namespaces.StopSpinner()
-		m.namespaces.Title = "Select a namespace"
 	case namespace.AddedMsg:
 		_ = m.namespaces.InsertItem(0, msg.Namespace)
 		ns := m.namespaces.Items()

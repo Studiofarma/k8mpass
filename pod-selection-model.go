@@ -73,6 +73,10 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		//cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Pod.K8sPod.Name)))
 	case pod.ModifiedPodMsg:
 		var idx = pod.FindPod(m.pods.Items(), msg.Pod)
+		if idx < 0 {
+			cmds = append(cmds, m.messageHandler.NextEvent)
+			break
+		}
 		cmds = append(cmds, m.pods.SetItem(idx, msg.Pod))
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case pod.NextEventMsg:
@@ -108,7 +112,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 			case operations:
 				i, ok := m.operations.SelectedItem().(api.NamespaceOperation)
 				if ok {
-					opCommand := i.Command(K8sCluster.kubernetes, m.namespace)
+					opCommand := m.messageHandler.RunComand(i, m.namespace)
 					cmds = append(cmds, opCommand)
 				} else {
 					panic("Casting went wrong")

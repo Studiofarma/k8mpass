@@ -1,12 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/joho/godotenv"
 	"github.com/studiofarma/k8mpass/api"
 	"log"
 	"os"
+	"plugin"
 )
 
 func main() {
@@ -36,31 +38,32 @@ func main() {
 	}
 }
 
-func loadPlugins() api.IPlugins {
-	return Plugins
-}
-
 //func loadPlugins() api.IPlugins {
-//	args := os.Args
-//	if len(args) < 3 {
-//		return api.Plugins{}
-//	}
-//	pluginPath := os.Args[2]
-//	plug, err := plugin.Open(pluginPath)
-//	if err != nil {
-//		fmt.Println(err)
-//		os.Exit(1)
-//	}
-//	symPlugins, err := plug.Lookup("Plugins")
-//	if err != nil {
-//		fmt.Println(err)
-//		os.Exit(1)
-//	}
-//	var plugins api.IPlugins
-//	plugins, ok := symPlugins.(api.IPlugins)
-//	if !ok {
-//		fmt.Println("unexpected type from module symbol ", symPlugins)
-//		os.Exit(1)
-//	}
-//	return plugins
+//	return Plugins
 //}
+
+func loadPlugins() api.IPlugins {
+	pluginPath := flag.String("plugin", "", "path to plugin file")
+	flag.Parse()
+	if *pluginPath == "" {
+		log.Println("No plugin to load")
+		return api.Plugins{}
+	}
+	plug, err := plugin.Open(*pluginPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	symPlugins, err := plug.Lookup("Plugins")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	var plugins api.IPlugins
+	plugins, ok := symPlugins.(api.IPlugins)
+	if !ok {
+		fmt.Println("unexpected type from module symbol ", symPlugins)
+		os.Exit(1)
+	}
+	return plugins
+}

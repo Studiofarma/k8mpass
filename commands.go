@@ -9,5 +9,7 @@ func (m *Model) clusterConnect() tea.Msg {
 	if err != nil {
 		return errMsg(err)
 	}
-	return clusterConnectedMsg{}
+	return clusterConnectedMsg{
+		context: m.cluster.GetContext(),
+	}
 }

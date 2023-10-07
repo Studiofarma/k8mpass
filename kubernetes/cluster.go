@@ -13,25 +13,36 @@ import (
 
 type ICluster interface {
 	Connect() error
+	GetContext() string
 }
 
 type Cluster struct {
+	context        string
 	cs             *kubernetes.Clientset
 	namespaceWatch watch.Interface
 	podWatch       watch.Interface
 }
 
+func (c *Cluster) GetContext() string {
+	return c.context
+}
+
 func (c *Cluster) Connect() error {
-	cs, err := getConnection()
+	configPath := getConfigPath()
+	cs, err := getConnection(configPath)
+	if err != nil {
+		return err
+	}
+	kubeCtx, err := getContext(configPath)
 	if err != nil {
 		return err
 	}
 	c.cs = cs
+	c.context = kubeCtx
 	return nil
 }
 
-func getConnection() (*kubernetes.Clientset, error) {
-	configPath := getConfigPath()
+func getConnection(configPath string) (*kubernetes.Clientset, error) {
 	// To add a minimum spinner time
 	sleep := time.NewTimer(time.Millisecond * 500).C
 
@@ -49,6 +60,18 @@ func getConnection() (*kubernetes.Clientset, error) {
 	}
 	<-sleep
 	return cs, nil
+}
+
+func getContext(configPath string) (string, error) {
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: configPath},
+		&clientcmd.ConfigOverrides{
+			CurrentContext: "",
+		}).RawConfig()
+	if err != nil {
+		return "", nil
+	}
+	return config.CurrentContext, nil
 }
 
 func getConfigPath() string {

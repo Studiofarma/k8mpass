@@ -1,6 +1,7 @@
 package pod
 
 import (
+	"context"
 	"fmt"
 	"github.com/studiofarma/k8mpass/api"
 	"log"
@@ -16,7 +17,7 @@ type MessageHandler struct {
 	AvailableNamespaceOperations []api.INamespaceOperation
 }
 
-func (handler MessageHandler) NextEvent() tea.Msg {
+func (handler *MessageHandler) NextEvent() tea.Msg {
 	event := handler.service.GetPodEvent()
 
 	switch event.Type {
@@ -31,7 +32,7 @@ func (handler MessageHandler) NextEvent() tea.Msg {
 	case k8mpasskube.Added:
 		pod := Item{K8sPod: *event.Pod, ExtendedProperties: make([]Property, 0)}
 		pod.LoadCustomProperties(handler.Extensions...)
-		log.Printf("Added pod: %s ", event.Pod)
+		log.Printf("Added pod: %s ", event.Pod.Name)
 		return AddedPodMsg{
 			Pod: pod,
 		}
@@ -48,9 +49,9 @@ func (handler MessageHandler) NextEvent() tea.Msg {
 	}
 }
 
-func (handler *MessageHandler) WatchPods(resourceVersion string, namespace string) tea.Cmd {
+func (handler *MessageHandler) WatchPods(ctx context.Context, resourceVersion string, namespace string) tea.Cmd {
 	return func() tea.Msg {
-		err := handler.service.WatchPods(namespace, resourceVersion)
+		err := handler.service.WatchPods(ctx, namespace, resourceVersion)
 		if err != nil {
 			return ErrorMsg{err}
 		}
@@ -71,7 +72,7 @@ func (handler *MessageHandler) GetPods(namespace string) tea.Cmd {
 				ResourceVersion: res.ResourceVersion,
 			}
 		},
-		handler.WatchPods(res.ResourceVersion, namespace),
+		handler.WatchPods(context.TODO(), res.ResourceVersion, namespace),
 	)
 }
 
@@ -119,11 +120,11 @@ func (n *Item) LoadCustomProperties(properties ...api.IPodExtension) {
 	}
 }
 
-func (handler MessageHandler) StopWatching() {
+func (handler *MessageHandler) StopWatching() {
 	handler.service.StopWatchingPods()
 }
 
-func (handler MessageHandler) CheckConditionsThatApply(namespace string) tea.Cmd {
+func (handler *MessageHandler) CheckConditionsThatApply(namespace string) tea.Cmd {
 	return func() tea.Msg {
 		var availableOps []api.INamespaceOperation
 		for _, operation := range handler.AvailableNamespaceOperations {
@@ -136,6 +137,10 @@ func (handler MessageHandler) CheckConditionsThatApply(namespace string) tea.Cmd
 		}
 		return api.AvailableOperationsMsg{Operations: availableOps}
 	}
+}
+
+func (handler *MessageHandler) RunComand(command api.INamespaceOperation, namespace string) tea.Cmd {
+	return handler.service.RunK8mpassCommand(command.GetCommand(), namespace)
 }
 
 func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation) *MessageHandler {

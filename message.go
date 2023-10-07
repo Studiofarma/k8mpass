@@ -2,7 +2,9 @@ package main
 
 type errMsg error
 
-type clusterConnectedMsg struct{}
+type clusterConnectedMsg struct {
+	context string
+}
 
 type startupMsg struct{}
 
