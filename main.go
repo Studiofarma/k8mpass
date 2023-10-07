@@ -20,18 +20,13 @@ func main() {
 		log.Println("Loaded .env correctly")
 	}
 	plugins := loadPlugins()
-	config := PinnedNamespaceService{}
-	err := config.LoadSavedNamespaces()
-	if err != nil {
-		log.Println("Failed to load config file")
-	}
 	log.Println("Loaded config correctly")
 
 	p := tea.NewProgram(
-		initialModel(plugins, config),
+		initialModel(plugins),
 		tea.WithAltScreen(),
 	)
-	_, err = p.Run()
+	_, err := p.Run()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

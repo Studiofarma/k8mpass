@@ -26,14 +26,13 @@ const (
 	PodSelection       state = 1
 )
 
-func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Model {
+func initialModel(plugins api.IPlugins) Model {
 	cluster := kubernetes.Cluster{}
 	return Model{
 		cluster: &cluster,
 		state:   NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
-			namespaces:    namespace.New(configService.GetNamespaces()),
-			pinnedService: &configService,
+			namespaces: namespace.New(),
 			messageHandler: namespace.NewHandler(
 				&cluster,
 				plugins.GetNamespaceExtensions()...,
@@ -69,6 +68,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
+			m.namespaceModel.userService.Persist()
 			return m, tea.Quit
 		default:
 			switch m.state {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/studiofarma/k8mpass/config"
 	"slices"
 	"sort"
 
@@ -12,7 +13,7 @@ import (
 
 type NamespaceSelectionModel struct {
 	messageHandler *namespace.MessageHandler
-	pinnedService  *PinnedNamespaceService
+	userService    config.IUserService
 	namespaces     list.Model
 }
 
@@ -30,6 +31,8 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		routedCmds = append(routedCmds, m.namespaces.StartSpinner())
 	case clusterConnectedMsg:
 		m.namespaces.Title = msg.context
+		m.userService = config.New(msg.context)
+		m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
 		cmds = append(cmds, m.messageHandler.GetNamespaces())
 	case namespace.WatchingMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
@@ -39,7 +42,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		for i, ns := range msg.Namespaces {
 			items[i] = ns
 		}
-		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(items, m.pinnedService.namespaces)))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(items, m.userService.GetPinnedNamespaces())))
 		m.WorkaroundForGraphicalBug()
 		m.namespaces.StopSpinner()
 	case namespace.AddedMsg:
@@ -48,7 +51,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
-		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.pinnedService.namespaces)))
+		routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.userService.GetPinnedNamespaces())))
 		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
@@ -104,25 +107,19 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 				panic("Casting went wrong")
 			}
 		case "p":
-			err := m.pinnedService.Pin(m.namespaces.SelectedItem().FilterValue())
-			if err != nil {
-				routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Error while pinning"))
-			} else {
-				m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.pinnedService.GetNamespaces()})
-				routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.pinnedService.namespaces)))
-			}
+			m.userService.Pin(m.namespaces.SelectedItem().FilterValue())
+			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
+			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.userService.GetPinnedNamespaces())))
+
 		case "u":
-			err := m.pinnedService.Unpin(m.namespaces.SelectedItem().FilterValue())
-			if err != nil {
-				routedCmds = append(routedCmds, m.namespaces.NewStatusMessage("Error while pinning"))
-			} else {
-				ns := m.namespaces.Items()
-				sort.SliceStable(ns, func(i, j int) bool {
-					return ns[i].FilterValue() < ns[j].FilterValue()
-				})
-				m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.pinnedService.GetNamespaces()})
-				routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.pinnedService.namespaces)))
-			}
+			m.userService.Unpin(m.namespaces.SelectedItem().FilterValue())
+			ns := m.namespaces.Items()
+			sort.SliceStable(ns, func(i, j int) bool {
+				return ns[i].FilterValue() < ns[j].FilterValue()
+			})
+			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
+			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.userService.GetPinnedNamespaces())))
+
 		}
 	}
 	switch msg := msg.(type) {

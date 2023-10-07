@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-func New(pinned []string) list.Model {
-	l := list.New([]list.Item{}, ItemDelegate{Pinned: pinned}, pageWidth, pageHeight)
+func New() list.Model {
+	l := list.New([]list.Item{}, ItemDelegate{}, pageWidth, pageHeight)
 	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)
