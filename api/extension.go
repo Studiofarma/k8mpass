@@ -6,16 +6,21 @@ type INamespaceExtension interface {
 	GetName() string
 	GetExtendSingle() NamespaceExtendSingleFunc
 	GetExtendList() NamespaceExtendListFunc
+	GetOrder() int
 }
 
 type NamespaceExtension struct {
 	Name         string
 	ExtendSingle NamespaceExtendSingleFunc
 	ExtendList   NamespaceExtendListFunc
+	Order        int
 }
 
 func (e NamespaceExtension) GetName() string {
 	return e.Name
+}
+func (e NamespaceExtension) GetOrder() int {
+	return e.Order
 }
 
 func (e NamespaceExtension) GetExtendSingle() NamespaceExtendSingleFunc {

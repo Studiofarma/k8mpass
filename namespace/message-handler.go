@@ -17,8 +17,7 @@ type MessageHandler struct {
 func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
 	namespace := Item{
-		K8sNamespace:       *event.Namespace,
-		ExtendedProperties: make([]Property, 0),
+		K8sNamespace: *event.Namespace,
 	}
 	switch event.Type {
 	case k8mpasskube.Deleted:
@@ -55,8 +54,6 @@ func (nh *MessageHandler) WatchNamespaces(resourceVersion string) tea.Cmd {
 	}
 }
 
-type namespaceName string
-
 func (nh *MessageHandler) GetNamespaces() tea.Cmd {
 	res, err := nh.service.GetNamespaces()
 	return tea.Sequence(
@@ -66,8 +63,7 @@ func (nh *MessageHandler) GetNamespaces() tea.Cmd {
 			}
 			namespaces := LoadExtensions(nh.Extensions, res.Items)
 			return ListMsg{
-				Namespaces:      namespaces,
-				ResourceVersion: res.ResourceVersion,
+				Namespaces: namespaces,
 			}
 		},
 		nh.WatchNamespaces(res.ResourceVersion),
@@ -91,7 +87,7 @@ func Refresh() tea.Cmd {
 
 func LoadExtensions(extensions []api.INamespaceExtension, res []v1.Namespace) []Item {
 	var namespaces []Item
-	namespaceProperties := make(map[namespaceName][]Property)
+	namespaceProperties := make(map[string][]Property)
 	for idx, e := range extensions {
 		fn := e.GetExtendList()
 		if fn == nil {
@@ -99,19 +95,19 @@ func LoadExtensions(extensions []api.INamespaceExtension, res []v1.Namespace) []
 		}
 		nsToValue := fn(res)
 		for ns, value := range nsToValue {
-			if namespaceProperties[namespaceName(ns)] == nil {
-				namespaceProperties[namespaceName(ns)] = make([]Property, 0)
+			if namespaceProperties[ns] == nil {
+				namespaceProperties[ns] = make([]Property, 0)
 			}
 			p := Property{
 				Key:   e.GetName(),
 				Value: value,
 				Order: idx,
 			}
-			namespaceProperties[namespaceName(ns)] = append(namespaceProperties[namespaceName(ns)], p)
+			namespaceProperties[ns] = append(namespaceProperties[ns], p)
 		}
 	}
 	for _, n := range res {
-		namespaces = append(namespaces, Item{n, namespaceProperties[namespaceName(n.Name)]})
+		namespaces = append(namespaces, Item{n, namespaceProperties[n.Name]})
 	}
 	return namespaces
 }

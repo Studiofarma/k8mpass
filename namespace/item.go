@@ -5,12 +5,15 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/reflow/truncate"
+	"github.com/muesli/termenv"
 	"github.com/studiofarma/k8mpass/api"
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"log"
 	"slices"
+	"sort"
 )
 
 type Item struct {
@@ -26,23 +29,6 @@ type Property struct {
 
 func (n Item) FilterValue() string {
 	return n.K8sNamespace.Name
-}
-
-func (n *Item) LoadCustomProperties(properties ...api.INamespaceExtension) {
-	n.ExtendedProperties = make([]Property, 0)
-	for idx, p := range properties {
-		fn := p.GetExtendSingle()
-		if fn == nil {
-			log.Println(fmt.Sprintf("Missing extention function for %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
-			continue
-		}
-		value, err := fn(n.K8sNamespace)
-		if err != nil {
-			log.Println(fmt.Sprintf("Error while computing extension %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
-			continue
-		}
-		n.ExtendedProperties = append(n.ExtendedProperties, Property{Key: p.GetName(), Value: value, Order: idx})
-	}
 }
 
 type ItemDelegate struct {
@@ -67,47 +53,23 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	maxLength := 0
-	propertyWidth := 12
-	for _, item := range m.VisibleItems() {
-		maxLength = max(maxLength, len(item.FilterValue()))
-	}
-
-	namespace := i.K8sNamespace.Name
+	namespace := ellipsis(i.K8sNamespace.Name, nameMaxLength)
+	properties := ""
+	nsStyle := commonStyle.Copy()
 	propertiesStyle := customPropertiesStyle.Copy()
-	style := unselectedItemStyle.Copy()
-	if slices.Contains(n.Pinned, namespace) {
-		style = pinnedStyle.Copy()
+	if slices.Contains(n.Pinned, i.K8sNamespace.Name) {
+		nsStyle = nsStyle.Inherit(pinnedStyle)
 	}
 	if index == m.Index() {
-		style = style.Inherit(selectedItemStyle.Copy())
-		style = style.Background(lipgloss.Color("#444852"))
-		propertiesStyle = propertiesStyle.Background(lipgloss.Color("#444852"))
+		nsStyle = nsStyle.Inherit(selectedItemStyle).UnsetMarginBackground()
+		propertiesStyle = propertiesStyle.Inherit(selectedItemStyle).UnsetMarginBackground()
 	}
-
-	customProperties := ""
+	nsStyle = nsStyle.Inherit(namespaceStatusStyle(i))
 	for _, property := range i.ExtendedProperties {
-		prop := lipgloss.PlaceHorizontal(propertyWidth, lipgloss.Left, ellipsis(property.Value, propertyWidth))
-		customProperties += propertiesStyle.Render(prop)
+		p := ellipsis(property.Value, propertyMaxWidth)
+		properties += propertiesStyle.Render(p)
 	}
-
-	if i.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
-		style = terminatingNamespace
-	}
-
-	_, _ = fmt.Fprint(w, style.Width(maxLength+3).Render(namespace)+customProperties)
-}
-
-func FindNamespace(items []list.Item, search Item) int {
-	var idx = -1
-	for i, item := range items {
-		if ns, ok := item.(Item); ok {
-			if ns.K8sNamespace.Name == search.K8sNamespace.Name {
-				idx = i
-			}
-		}
-	}
-	return idx
+	_, _ = fmt.Fprint(w, nsStyle.Render(namespace)+properties)
 }
 
 func ellipsis(s string, length int) string {
@@ -115,4 +77,47 @@ func ellipsis(s string, length int) string {
 		return truncate.StringWithTail(s, uint(length), "..")
 	}
 	return s
+}
+
+func (n *Item) LoadCustomProperties(extensions ...api.INamespaceExtension) {
+	var properties = make([]Property, len(extensions))
+	n.ExtendedProperties = make([]Property, 0)
+	for _, p := range extensions {
+		fn := p.GetExtendSingle()
+		if fn == nil {
+			log.Println(fmt.Sprintf("Missing extention function for %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
+			continue
+		}
+		value, err := fn(n.K8sNamespace)
+		if err != nil {
+			log.Println(fmt.Sprintf("Error while computing extension %s", p.GetName()), "namespace:", n.K8sNamespace.Name)
+			continue
+		}
+		properties = append(properties, Property{Key: p.GetName(), Value: value, Order: p.GetOrder()})
+	}
+	sort.SliceStable(properties, func(i, j int) bool {
+		return properties[i].Order > properties[j].Order
+	})
+	n.ExtendedProperties = properties
+}
+
+func namespaceStatusStyle(ns Item) lipgloss.Style {
+	style := lipgloss.NewStyle()
+	if ns.K8sNamespace.Status.Phase == v1.NamespaceTerminating {
+		style = terminatingNamespaceStyle
+	}
+	return style
+}
+
+func slightlyBrighterTerminalColor() lipgloss.Color {
+	multiplier := 1.5
+	terminalColor := termenv.BackgroundColor()
+	rgb := termenv.ConvertToRGB(terminalColor)
+	r, g, b := colorful.Color{
+		R: rgb.R * multiplier,
+		G: rgb.G * multiplier,
+		B: rgb.B * multiplier,
+	}.RGB255()
+	hex := fmt.Sprintf("#%02x%02x%02x", r, g, b)
+	return lipgloss.Color(hex)
 }

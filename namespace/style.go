@@ -3,8 +3,10 @@ package namespace
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	pageHeight = 20
-	pageWidth  = 80
+	pageHeight       = 20
+	pageWidth        = 80
+	nameMaxLength    = 30
+	propertyMaxWidth = 15
 )
 
 var (
@@ -12,22 +14,19 @@ var (
 			Background(lipgloss.Color("62")).
 			Bold(true).
 			Padding(0, 1)
-	statusMessageGreen = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#66ffc2"))
-	statusMessageRed = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#ff6666"))
+	commonStyle = lipgloss.NewStyle().
+			MarginLeft(2).
+			Width(nameMaxLength)
+	selectedItemStyle = lipgloss.NewStyle().
+				Background(slightlyBrighterTerminalColor())
+	pinnedStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#ffe39c"))
+
 	customPropertiesStyle = lipgloss.NewStyle().
 				PaddingLeft(4).
-				Foreground(lipgloss.Color("#7d7d7d"))
-	selectedItemStyle = lipgloss.NewStyle().
-				MarginLeft(2)
-	unselectedItemStyle = lipgloss.NewStyle().
-				MarginLeft(2)
-	pinnedStyle = lipgloss.NewStyle().
-			MarginLeft(2).
-			Foreground(lipgloss.Color("#fac65f"))
+				Foreground(lipgloss.Color("#707070")).
+				Width(propertyMaxWidth)
 
-	terminatingNamespace = lipgloss.NewStyle().
-				MarginLeft(2).
-				Foreground(lipgloss.Color("#6b6b6b"))
+	terminatingNamespaceStyle = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#6b6b6b"))
 )

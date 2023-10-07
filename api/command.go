@@ -9,7 +9,6 @@ type INamespaceOperation interface {
 	GetName() string
 	GetCommand() K8mpassCommand
 	GetCondition() K8mpassCondition
-
 	FilterValue() string
 }
 

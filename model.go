@@ -50,9 +50,12 @@ func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Mo
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.clusterConnect, func() tea.Msg {
-		return startupMsg{}
-	})
+	return tea.Sequence(
+		func() tea.Msg {
+			return startupMsg{}
+		},
+		m.clusterConnect,
+	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -87,11 +90,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, pmCmd)
 	default:
 		nm, nmCmd := m.namespaceModel.Update(msg)
-		m.namespaceModel = nm
-		cmds = append(cmds, nmCmd)
 		pm, pmCmd := m.podModel.Update(msg)
+		m.namespaceModel = nm
 		m.podModel = pm
-		cmds = append(cmds, pmCmd)
+		cmds = append(cmds, pmCmd, nmCmd)
 	}
 
 	switch msg.(type) {

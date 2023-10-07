@@ -6,7 +6,7 @@ import (
 )
 
 func New(pinned []string) list.Model {
-	l := list.New([]list.Item{}, ItemDelegate{Pinned: pinned}, 0, 0)
+	l := list.New([]list.Item{}, ItemDelegate{Pinned: pinned}, pageWidth, pageHeight)
 	l.Title = "Loading namespaces..."
 	l.SetShowStatusBar(true)
 	l.SetShowHelp(true)

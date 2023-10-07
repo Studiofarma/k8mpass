@@ -21,8 +21,7 @@ type RemovedMsg struct {
 }
 
 type ListMsg struct {
-	Namespaces      []Item
-	ResourceVersion string
+	Namespaces []Item
 }
 
 type NextEventMsg struct{}

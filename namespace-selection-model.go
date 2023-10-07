@@ -53,12 +53,12 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Namespace.K8sNamespace.Name)))
 	case namespace.ModifiedMsg:
-		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
+		var idx = FindItem(m.namespaces.Items(), msg.Namespace)
 		routedCmds = append(routedCmds, m.namespaces.SetItem(idx, msg.Namespace))
 		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.messageHandler.NextEvent)
 	case namespace.RemovedMsg:
-		var idx = namespace.FindNamespace(m.namespaces.Items(), msg.Namespace)
+		var idx = FindItem(m.namespaces.Items(), msg.Namespace)
 		m.namespaces.RemoveItem(idx)
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		routedCmds = append(routedCmds, m.namespaces.NewStatusMessage(fmt.Sprintf("REMOVED: %s", msg.Namespace.K8sNamespace.Name)))
