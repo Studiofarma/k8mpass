@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/studiofarma/k8mpass/api"
 	"sort"
@@ -12,12 +11,11 @@ import (
 )
 
 type PodSelectionModel struct {
-	messageHandler      *pod.MessageHandler
-	availableOperations []api.INamespaceOperation
-	pods                list.Model
-	operations          list.Model
-	namespace           string
-	dimensions          struct {
+	messageHandler *pod.MessageHandler
+	pods           list.Model
+	operations     list.Model
+	namespace      string
+	dimensions     struct {
 		width  int
 		height int
 	}
@@ -48,8 +46,8 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 	case namespaceSelectedMsg:
 		m.namespace = msg.namespace
 		m.operations.Title = msg.namespace
-		cmds = append(cmds, CheckConditionsThatApply(K8sCluster.kubernetes, m.namespace, m.availableOperations))
-		cmds = append(cmds, m.messageHandler.GetPods(context.TODO(), K8sCluster.kubernetes, msg.namespace))
+		cmds = append(cmds, m.messageHandler.CheckConditionsThatApply(msg.namespace))
+		cmds = append(cmds, m.messageHandler.GetPods(msg.namespace))
 		routedCmds = append(cmds, m.operations.StartSpinner())
 	case pod.WatchingPodsMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)

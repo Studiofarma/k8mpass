@@ -15,7 +15,7 @@ type MessageHandler struct {
 }
 
 func (nh MessageHandler) NextEvent() tea.Msg {
-	event := nh.service.GetEvent()
+	event := nh.service.GetNamespaceEvent()
 	namespace := Item{
 		K8sNamespace: *event.Namespace,
 	}
@@ -37,7 +37,7 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 		return ModifiedMsg{
 			Namespace: namespace,
 		}
-	case k8mpasskube.Closed:
+	case k8mpasskube.Closed, k8mpasskube.Error:
 		return nil
 	default:
 		return NextEventMsg{}
@@ -46,7 +46,7 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 
 func (nh *MessageHandler) WatchNamespaces(resourceVersion string) tea.Cmd {
 	return func() tea.Msg {
-		err := nh.service.Watch(resourceVersion)
+		err := nh.service.WatchNamespaces(resourceVersion)
 		if err != nil {
 			return ErrorMsg{err}
 		}

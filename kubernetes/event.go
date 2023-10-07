@@ -7,6 +7,11 @@ type NamespaceEvent struct {
 	Namespace *v1.Namespace
 }
 
+type PodEvent struct {
+	Type EventType
+	Pod  *v1.Pod
+}
+
 type EventType string
 
 const (

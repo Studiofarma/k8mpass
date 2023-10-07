@@ -9,8 +9,8 @@ import (
 
 type INamespaceService interface {
 	GetNamespaces() (*v1.NamespaceList, error)
-	GetEvent() NamespaceEvent
-	Watch(resourceVersion string) error
+	GetNamespaceEvent() NamespaceEvent
+	WatchNamespaces(resourceVersion string) error
 }
 
 func (c *Cluster) GetNamespaces() (*v1.NamespaceList, error) {
@@ -21,7 +21,7 @@ func (c *Cluster) GetNamespaces() (*v1.NamespaceList, error) {
 	return res, nil
 }
 
-func (c *Cluster) GetEvent() NamespaceEvent {
+func (c *Cluster) GetNamespaceEvent() NamespaceEvent {
 	e, closed := <-c.namespaceWatch.ResultChan()
 	if closed {
 		return NamespaceEvent{
@@ -57,7 +57,7 @@ func (c *Cluster) GetEvent() NamespaceEvent {
 	}
 }
 
-func (c *Cluster) Watch(resourceVersion string) error {
+func (c *Cluster) WatchNamespaces(resourceVersion string) error {
 	opt := metav1.ListOptions{
 		ResourceVersion: resourceVersion,
 	}

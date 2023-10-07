@@ -18,6 +18,7 @@ type ICluster interface {
 type Cluster struct {
 	cs             *kubernetes.Clientset
 	namespaceWatch watch.Interface
+	podWatch       watch.Interface
 }
 
 func (c *Cluster) Connect() error {

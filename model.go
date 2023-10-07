@@ -42,9 +42,11 @@ func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Mo
 		podModel: PodSelectionModel{
 			pods: pod.New(),
 			messageHandler: pod.NewHandler(
-				plugins.GetPodExtensions()...),
-			availableOperations: plugins.GetNamespaceOperations(),
-			operations:          initializeOperationList(),
+				&cluster,
+				plugins.GetPodExtensions(),
+				plugins.GetNamespaceOperations(),
+			),
+			operations: initializeOperationList(),
 		},
 	}
 }

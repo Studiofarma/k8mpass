@@ -1,7 +1,6 @@
 package pod
 
 import (
-	"context"
 	"fmt"
 	"github.com/studiofarma/k8mpass/api"
 	"log"
@@ -9,55 +8,49 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	k8mpasskube "github.com/studiofarma/k8mpass/kubernetes"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 )
 
 type MessageHandler struct {
-	service    k8mpasskube.PodService
-	Extensions []api.IPodExtension
+	service                      k8mpasskube.IPodService
+	Extensions                   []api.IPodExtension
+	AvailableNamespaceOperations []api.INamespaceOperation
 }
 
 func (handler MessageHandler) NextEvent() tea.Msg {
-	event := handler.service.GetEvent()
+	event := handler.service.GetPodEvent()
 
 	switch event.Type {
-	case watch.Deleted:
-		item := event.Object.(*v1.Pod)
-		log.Printf("Deleted pod: %s ", item.Name)
+	case k8mpasskube.Deleted:
+		log.Printf("Deleted pod: %s ", event.Pod)
 		return RemovedPodMsg{
 			Pod: Item{
-				K8sPod:             *item,
+				K8sPod:             *event.Pod,
 				ExtendedProperties: make([]Property, 0),
 			},
 		}
-	case watch.Added:
-		item := event.Object.(*v1.Pod)
-		pod := Item{K8sPod: *item, ExtendedProperties: make([]Property, 0)}
+	case k8mpasskube.Added:
+		pod := Item{K8sPod: *event.Pod, ExtendedProperties: make([]Property, 0)}
 		pod.LoadCustomProperties(handler.Extensions...)
-		log.Printf("Added pod: %s ", item.Name)
+		log.Printf("Added pod: %s ", event.Pod)
 		return AddedPodMsg{
 			Pod: pod,
 		}
-	case watch.Modified:
-		item := event.Object.(*v1.Pod)
-		pod := Item{K8sPod: *item, ExtendedProperties: make([]Property, 0)}
+	case k8mpasskube.Modified:
+		pod := Item{K8sPod: *event.Pod, ExtendedProperties: make([]Property, 0)}
 		pod.LoadCustomProperties(handler.Extensions...)
 		return ModifiedPodMsg{
 			Pod: pod,
 		}
-	case watch.Error, "":
-		log.Printf("Error event for pods")
+	case k8mpasskube.Closed, k8mpasskube.Error:
 		return nil
 	default:
-		log.Printf("NamespaceEvent not handled")
 		return NextEventMsg{}
 	}
 }
 
-func (handler *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Clientset, resourceVersion string, namespace string) tea.Cmd {
+func (handler *MessageHandler) WatchPods(resourceVersion string, namespace string) tea.Cmd {
 	return func() tea.Msg {
-		err := handler.service.Subscribe(ctx, cs, resourceVersion, namespace)
+		err := handler.service.WatchPods(namespace, resourceVersion)
 		if err != nil {
 			return ErrorMsg{err}
 		}
@@ -65,8 +58,8 @@ func (handler *MessageHandler) WatchPods(ctx context.Context, cs *kubernetes.Cli
 	}
 }
 
-func (handler *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clientset, namespace string) tea.Cmd {
-	res, err := handler.service.GetPods(ctx, cs, namespace)
+func (handler *MessageHandler) GetPods(namespace string) tea.Cmd {
+	res, err := handler.service.GetPods(namespace)
 	return tea.Sequence(
 		func() tea.Msg {
 			if err != nil {
@@ -78,7 +71,7 @@ func (handler *MessageHandler) GetPods(ctx context.Context, cs *kubernetes.Clien
 				ResourceVersion: res.ResourceVersion,
 			}
 		},
-		handler.WatchPods(ctx, cs, res.ResourceVersion, namespace),
+		handler.WatchPods(res.ResourceVersion, namespace),
 	)
 }
 
@@ -127,13 +120,29 @@ func (n *Item) LoadCustomProperties(properties ...api.IPodExtension) {
 }
 
 func (handler MessageHandler) StopWatching() {
-	handler.service.Watcher.Stop()
+	handler.service.StopWatchingPods()
 }
 
-func NewHandler(extensions ...api.IPodExtension) *MessageHandler {
+func (handler MessageHandler) CheckConditionsThatApply(namespace string) tea.Cmd {
+	return func() tea.Msg {
+		var availableOps []api.INamespaceOperation
+		for _, operation := range handler.AvailableNamespaceOperations {
+			if operation.GetCondition() == nil {
+				continue
+			}
+			if handler.service.RunK8mpassCondition(operation.GetCondition(), namespace) {
+				availableOps = append(availableOps, operation)
+			}
+		}
+		return api.AvailableOperationsMsg{Operations: availableOps}
+	}
+}
+
+func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation) *MessageHandler {
 	return &MessageHandler{
-		service:    k8mpasskube.PodService{},
-		Extensions: extensions,
+		service:                      service,
+		Extensions:                   extensions,
+		AvailableNamespaceOperations: ops,
 	}
 }
 

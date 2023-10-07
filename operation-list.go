@@ -71,7 +71,7 @@ func (o OperationItemDelegate) Update(tea.Msg, *list.Model) tea.Cmd {
 func initializeOperationList() list.Model {
 	var items []list.Item
 	l := list.New(items, OperationItemDelegate{IsFocused: true}, 0, 0)
-	l.Title = "Namespace operations"
+	l.Title = "Pod operations"
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
 	l.SetFilteringEnabled(false)
