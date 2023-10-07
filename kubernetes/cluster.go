@@ -84,7 +84,7 @@ func configPathFromEnvVar() string {
 func configPathFromFlag() string {
 	path := flag.String("kubeconfig", "", "specify kubernetes config file to use")
 	flag.Parse()
-	if path == nil {
+	if path != nil {
 		return *path
 	}
 	return ""
