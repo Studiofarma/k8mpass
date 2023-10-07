@@ -32,6 +32,9 @@ func (p PinnedNamespaceService) GetNamespaces() []string {
 }
 
 func (p *PinnedNamespaceService) Pin(ns string) error {
+	if slices.Contains(p.namespaces, ns) {
+		return nil
+	}
 	p.namespaces = append(p.namespaces, ns)
 	err := WriteLineToConfigFile(ns)
 	if err != nil {
