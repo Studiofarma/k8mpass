@@ -29,7 +29,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 	case startupMsg:
 		routedCmds = append(routedCmds, m.namespaces.StartSpinner())
 	case clusterConnectedMsg:
-		cmds = append(cmds, m.messageHandler.GetNamespaces(K8sCluster.kubernetes))
+		cmds = append(cmds, m.messageHandler.GetNamespaces())
 	case namespace.WatchingMsg:
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		cmds = append(cmds, namespace.Refresh())

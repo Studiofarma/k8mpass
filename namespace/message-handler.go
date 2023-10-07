@@ -5,53 +5,49 @@ import (
 	"github.com/studiofarma/k8mpass/api"
 	k8mpasskube "github.com/studiofarma/k8mpass/kubernetes"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	"time"
 )
 
 type MessageHandler struct {
-	service    k8mpasskube.NamespaceService
+	service    k8mpasskube.INamespaceService
 	Extensions []api.INamespaceExtension
 }
 
 func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetEvent()
-	item, ok := event.Object.(*v1.Namespace)
-	if !ok {
-		return NextEventMsg{}
-	}
 	namespace := Item{
-		K8sNamespace:       *item,
+		K8sNamespace:       *event.Namespace,
 		ExtendedProperties: make([]Property, 0),
 	}
 	switch event.Type {
-	case watch.Deleted:
-		log.Printf("Deleted namespace: %s ", item.Name)
+	case k8mpasskube.Deleted:
+		log.Printf("Deleted namespace: %s ", event.Namespace.Name)
 		return RemovedMsg{
 			Namespace: namespace,
 		}
-	case watch.Added:
+	case k8mpasskube.Added:
 		namespace.LoadCustomProperties(nh.Extensions...)
-		log.Printf("Added namespace: %s ", item.Name)
+		log.Printf("Added namespace: %s ", event.Namespace.Name)
 		return AddedMsg{
 			Namespace: namespace,
 		}
-	case watch.Modified:
+	case k8mpasskube.Modified:
 		namespace.LoadCustomProperties(nh.Extensions...)
-		log.Printf("Modified namespace: %s ", item.Name)
+		log.Printf("Modified namespace: %s ", event.Namespace.Name)
 		return ModifiedMsg{
 			Namespace: namespace,
 		}
+	case k8mpasskube.Closed:
+		return nil
 	default:
 		return NextEventMsg{}
 	}
 }
 
-func (nh *MessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVersion string) tea.Cmd {
+func (nh *MessageHandler) WatchNamespaces(resourceVersion string) tea.Cmd {
 	return func() tea.Msg {
-		err := nh.service.Subscribe(cs, resourceVersion)
+		err := nh.service.Watch(resourceVersion)
 		if err != nil {
 			return ErrorMsg{err}
 		}
@@ -61,8 +57,8 @@ func (nh *MessageHandler) WatchNamespaces(cs *kubernetes.Clientset, resourceVers
 
 type namespaceName string
 
-func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
-	res, err := nh.service.GetNamespaces(cs)
+func (nh *MessageHandler) GetNamespaces() tea.Cmd {
+	res, err := nh.service.GetNamespaces()
 	return tea.Sequence(
 		func() tea.Msg {
 			if err != nil {
@@ -74,7 +70,7 @@ func (nh *MessageHandler) GetNamespaces(cs *kubernetes.Clientset) tea.Cmd {
 				ResourceVersion: res.ResourceVersion,
 			}
 		},
-		nh.WatchNamespaces(cs, res.ResourceVersion),
+		nh.WatchNamespaces(res.ResourceVersion),
 	)
 }
 
@@ -147,9 +143,9 @@ func GetReloadedExtensions(extensions []api.INamespaceExtension, res []Item) map
 	return namespaceProperties
 }
 
-func NewHandler(exts ...api.INamespaceExtension) *MessageHandler {
+func NewHandler(service k8mpasskube.INamespaceService, exts ...api.INamespaceExtension) *MessageHandler {
 	return &MessageHandler{
-		service:    k8mpasskube.NamespaceService{},
+		service:    service,
 		Extensions: exts,
 	}
 }

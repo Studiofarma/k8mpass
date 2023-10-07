@@ -6,13 +6,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func clusterConnect() tea.Msg {
-	cs, err := getConnection()
+func (m *Model) clusterConnect() tea.Msg {
+	err := m.cluster.Connect()
 	if err != nil {
 		return errMsg(err)
 	}
-	K8sCluster = kubernetesCluster{cs}
-	return clusterConnectedMsg{cs}
+	return clusterConnectedMsg{}
 }
 
 func CheckConditionsThatApply(cs *kubernetes.Clientset, namespace string, operations []api.INamespaceOperation) tea.Cmd {

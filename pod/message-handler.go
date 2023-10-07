@@ -50,7 +50,7 @@ func (handler MessageHandler) NextEvent() tea.Msg {
 		log.Printf("Error event for pods")
 		return nil
 	default:
-		log.Printf("Event not handled")
+		log.Printf("NamespaceEvent not handled")
 		return NextEventMsg{}
 	}
 }

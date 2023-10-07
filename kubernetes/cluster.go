@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"flag"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
@@ -15,7 +16,8 @@ type ICluster interface {
 }
 
 type Cluster struct {
-	cs *kubernetes.Clientset
+	cs             *kubernetes.Clientset
+	namespaceWatch watch.Interface
 }
 
 func (c *Cluster) Connect() error {
@@ -74,7 +76,7 @@ func defaultKubeConfigFilePath() string {
 func configPathFromEnvVar() string {
 	path, found := os.LookupEnv("KUBECONFIG")
 	if !found {
-		return "nil"
+		return ""
 	}
 	return path
 }

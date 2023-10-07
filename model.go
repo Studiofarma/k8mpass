@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/kubernetes"
 	"time"
 
 	"github.com/studiofarma/k8mpass/pod"
@@ -12,9 +13,10 @@ import (
 
 type Model struct {
 	error          errMsg
-	state          state
+	cluster        kubernetes.ICluster
 	namespaceModel NamespaceSelectionModel
 	podModel       PodSelectionModel
+	state          state
 }
 
 type state int32
@@ -25,12 +27,15 @@ const (
 )
 
 func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Model {
+	cluster := kubernetes.Cluster{}
 	return Model{
-		state: NamespaceSelection,
+		cluster: &cluster,
+		state:   NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
 			namespaces:    namespace.New(configService.GetNamespaces()),
 			pinnedService: &configService,
 			messageHandler: namespace.NewHandler(
+				&cluster,
 				plugins.GetNamespaceExtensions()...,
 			),
 		},
@@ -45,7 +50,7 @@ func initialModel(plugins api.IPlugins, configService PinnedNamespaceService) Mo
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(clusterConnect, func() tea.Msg {
+	return tea.Batch(m.clusterConnect, func() tea.Msg {
 		return startupMsg{}
 	})
 }
