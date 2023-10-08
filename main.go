@@ -1,47 +1,86 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/joho/godotenv"
+	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/ssh"
+	"github.com/charmbracelet/wish"
+	bm "github.com/charmbracelet/wish/bubbletea"
+	lm "github.com/charmbracelet/wish/logging"
 	"github.com/studiofarma/k8mpass/api"
-	"log"
 	"os"
+	"os/signal"
 	"plugin"
+	"syscall"
+	"time"
+)
+
+const (
+	host = "localhost"
+	port = 23234
 )
 
 func main() {
-	_ = os.Remove("debug/k8s_debug.log")
-	_, _ = tea.LogToFile("debug/k8s_debug.log", "DEBUG")
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("Failed to load .env")
-	} else {
-		log.Println("Loaded .env correctly")
-	}
-	plugins := loadPlugins()
-	log.Println("Loaded config correctly")
-
-	p := tea.NewProgram(
-		initialModel(plugins),
-		tea.WithAltScreen(),
+	s, err := wish.NewServer(
+		wish.WithAddress(fmt.Sprintf("%s:%d", host, port)),
+		wish.WithHostKeyPath(".ssh/term_info_ed25519"),
+		wish.WithMiddleware(
+			bm.Middleware(teaHandler),
+			lm.Middleware(),
+		),
 	)
-	_, err := p.Run()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Error("could not start server", "error", err)
+	}
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	log.Info("Starting SSH server", "host", host, "port", port)
+	go func() {
+		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+			log.Error("could not start server", "error", err)
+			done <- nil
+		}
+	}()
+
+	<-done
+	log.Info("Stopping SSH server")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer func() { cancel() }()
+	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+		log.Error("could not stop server", "error", err)
 	}
 }
 
-//func loadPlugins() api.IPlugins {
-//	return Plugins
-//}
+// You can wire any Bubble Tea model up to the middleware with a function that
+// handles the incoming ssh.Session. Here we just grab the terminal info and
+// pass it to the new model. You can also return tea.ProgramOptions (such as
+// tea.WithAltScreen) on a session by session basis.
+func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+	_, _, active := s.Pty()
+	if !active {
+		wish.Fatalln(s, "no active terminal, skipping")
+		return nil, nil
+	}
+	m := model(s.User())
+	return m, []tea.ProgramOption{tea.WithAltScreen()}
+}
+
+func model(user string) Model {
+	log.Infof("Creating model for user " + user)
+	return initialModel(p)
+}
+
+var p = loadPlugins()
 
 func loadPlugins() api.IPlugins {
 	pluginPath := flag.String("plugin", "", "path to plugin file")
 	flag.Parse()
 	if *pluginPath == "" {
-		log.Println("No plugin to load")
 		return api.Plugins{}
 	}
 	plug, err := plugin.Open(*pluginPath)
