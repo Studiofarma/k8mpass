@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
@@ -12,6 +11,7 @@ import (
 	bm "github.com/charmbracelet/wish/bubbletea"
 	lm "github.com/charmbracelet/wish/logging"
 	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/config"
 	"os"
 	"os/signal"
 	"plugin"
@@ -25,6 +25,7 @@ const (
 )
 
 func main() {
+	config.LoadFlags()
 	s, err := wish.NewServer(
 		wish.WithAddress(fmt.Sprintf("%s:%d", host, port)),
 		wish.WithHostKeyPath(".ssh/term_info_ed25519"),
@@ -72,18 +73,16 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 
 func model(user string) Model {
 	log.Infof("Creating model for user " + user)
-	return initialModel(p)
+	return initialModel(p, user)
 }
 
 var p = loadPlugins()
 
 func loadPlugins() api.IPlugins {
-	pluginPath := flag.String("plugin", "", "path to plugin file")
-	flag.Parse()
-	if *pluginPath == "" {
+	if config.Plugin == "" {
 		return api.Plugins{}
 	}
-	plug, err := plugin.Open(*pluginPath)
+	plug, err := plugin.Open(config.Plugin)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

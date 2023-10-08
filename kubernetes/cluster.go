@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"context"
-	"flag"
+	"github.com/studiofarma/k8mpass/config"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -14,17 +14,26 @@ import (
 type ICluster interface {
 	Connect() error
 	GetContext() string
+	GetUser() string
 }
 
 type Cluster struct {
 	context        string
+	user           string
 	cs             *kubernetes.Clientset
 	namespaceWatch watch.Interface
 	podWatch       watch.Interface
 }
 
+func New(user string) Cluster {
+	return Cluster{user: user}
+}
+
 func (c *Cluster) GetContext() string {
 	return c.context
+}
+func (c *Cluster) GetUser() string {
+	return c.user
 }
 
 func (c *Cluster) Connect() error {
@@ -76,7 +85,7 @@ func getContext(configPath string) (string, error) {
 
 func getConfigPath() string {
 	var configPath string
-	if f := configPathFromFlag(); f != "" {
+	if f := config.Config; f != "" {
 		configPath = f
 	} else if e := configPathFromEnvVar(); e != "" {
 		configPath = e
@@ -108,13 +117,4 @@ func configPathFromEnvVar() string {
 		return ""
 	}
 	return path
-}
-
-func configPathFromFlag() string {
-	path := flag.String("kubeconfig", "", "specify kubernetes config file to use")
-	flag.Parse()
-	if path == nil {
-		return *path
-	}
-	return ""
 }

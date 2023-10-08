@@ -31,7 +31,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 		routedCmds = append(routedCmds, m.namespaces.StartSpinner())
 	case clusterConnectedMsg:
 		m.namespaces.Title = msg.context
-		m.userService = config.New(msg.context)
+		m.userService.Load(msg.context)
 		m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
 		cmds = append(cmds, m.messageHandler.GetNamespaces())
 	case namespace.WatchingMsg:

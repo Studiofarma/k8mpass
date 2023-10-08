@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/config"
 	"github.com/studiofarma/k8mpass/kubernetes"
 	"time"
 
@@ -26,13 +27,14 @@ const (
 	PodSelection       state = 1
 )
 
-func initialModel(plugins api.IPlugins) Model {
-	cluster := kubernetes.Cluster{}
+func initialModel(plugins api.IPlugins, user string) Model {
+	cluster := kubernetes.New(user)
 	return Model{
 		cluster: &cluster,
 		state:   NamespaceSelection,
 		namespaceModel: NamespaceSelectionModel{
-			namespaces: namespace.New(),
+			namespaces:  namespace.New(),
+			userService: config.New(cluster.GetUser()),
 			messageHandler: namespace.NewHandler(
 				&cluster,
 				plugins.GetNamespaceExtensions()...,
@@ -68,7 +70,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
-			m.namespaceModel.userService.Persist()
+			m.namespaceModel.userService.Persist(m.cluster.GetContext())
 			return m, tea.Quit
 		default:
 			switch m.state {
