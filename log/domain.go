@@ -1,6 +1,10 @@
 package log
 
-import "github.com/muesli/reflow/truncate"
+import (
+	"github.com/muesli/reflow/truncate"
+	"k8s.io/utils/strings/slices"
+	"strings"
+)
 
 type Logs struct {
 	Lines   []string
@@ -15,11 +19,18 @@ func NewLogs() *Logs {
 }
 
 func (l Logs) TruncatedLines(length int) []string {
-	truncatedLines := make([]string, len(l.Lines))
-	for idx, line := range l.Lines {
-		truncatedLines[idx] = ellipsis(line, length)
+	return truncateList(l.Lines, length)
+}
+
+func (l Logs) FilterAndTruncate(filterBy string, length int) []string {
+	if filterBy == "" {
+		return truncateList(l.Lines, length)
 	}
-	return truncatedLines
+	var filteredList []string
+	filteredList = slices.Filter(filteredList, l.Lines, func(s string) bool {
+		return strings.Contains(s, filterBy)
+	})
+	return truncateList(filteredList, length)
 }
 
 func ellipsis(s string, length int) string {
@@ -27,4 +38,12 @@ func ellipsis(s string, length int) string {
 		return truncate.StringWithTail(s, uint(length), "..")
 	}
 	return s
+}
+
+func truncateList(list []string, length int) []string {
+	truncatedLines := make([]string, len(list))
+	for idx, line := range list {
+		truncatedLines[idx] = ellipsis(line, length)
+	}
+	return truncatedLines
 }

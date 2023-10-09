@@ -179,9 +179,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				cmds = append(cmds, pod.Route(routedCmds...)...)
 				return m, tea.Batch(cmds...)
 			case logs:
-				logm, logCmd := m.logs.Update(msg)
-				m.logs = logm
-				routedCmds = append(cmds, logCmd)
+				logM, logCmd := m.logs.Update(msg)
+				m.logs = logM
+				routedCmds = append(routedCmds, logCmd)
 				cmds = append(cmds, pod.Route(routedCmds...)...)
 				return m, tea.Batch(cmds...)
 			}
