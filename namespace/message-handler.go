@@ -16,22 +16,28 @@ type MessageHandler struct {
 
 func (nh MessageHandler) NextEvent() tea.Msg {
 	event := nh.service.GetNamespaceEvent()
-	namespace := Item{
-		K8sNamespace: *event.Namespace,
-	}
 	switch event.Type {
 	case k8mpasskube.Deleted:
 		log.Printf("Deleted namespace: %s ", event.Namespace.Name)
+		namespace := Item{
+			K8sNamespace: *event.Namespace,
+		}
 		return RemovedMsg{
 			Namespace: namespace,
 		}
 	case k8mpasskube.Added:
+		namespace := Item{
+			K8sNamespace: *event.Namespace,
+		}
 		namespace.LoadCustomProperties(nh.Extensions...)
 		log.Printf("Added namespace: %s ", event.Namespace.Name)
 		return AddedMsg{
 			Namespace: namespace,
 		}
 	case k8mpasskube.Modified:
+		namespace := Item{
+			K8sNamespace: *event.Namespace,
+		}
 		namespace.LoadCustomProperties(nh.Extensions...)
 		log.Printf("Modified namespace: %s ", event.Namespace.Name)
 		return ModifiedMsg{

@@ -111,7 +111,6 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
 			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.userService.GetPinnedNamespaces())))
 			m.WorkaroundForGraphicalBug()
-
 		case "u":
 			m.userService.Unpin(m.namespaces.SelectedItem().FilterValue())
 			ns := m.namespaces.Items()
