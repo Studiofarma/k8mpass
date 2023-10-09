@@ -26,8 +26,8 @@ func NewViewport() viewport.Model {
 	return v
 }
 
-func (m PodSelectionModel) headerView(pod string) string {
-	title := logsTitleStyle.Render(pod)
+func (m PodSelectionModel) headerView(namespace string, pod string) string {
+	title := logsTitleStyle.Render(fmt.Sprintf("%s : %s", namespace, pod))
 	line := strings.Repeat("─", max(0, m.logs.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }

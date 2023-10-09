@@ -15,8 +15,10 @@ type ILogService interface {
 }
 
 func (c *Cluster) GetLogReader(nameSpace string, podName string, maxWidth int) error {
+	tailLines := int64(1000)
 	podLogOpts := v1.PodLogOptions{
-		Follow: true,
+		Follow:    true,
+		TailLines: &tailLines,
 	}
 	req := c.cs.CoreV1().Pods(nameSpace).GetLogs(podName, &podLogOpts)
 

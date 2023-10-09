@@ -64,13 +64,18 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 			items[i] = ns
 		}
 		cmds = append(cmds, m.pods.SetItems(items))
+		m.WorkaroundForGraphicalBug()
 	case pod.AddedPodMsg:
+		m.WorkaroundForGraphicalBug()
 		cmds = append(cmds, m.pods.InsertItem(0, msg.Pod))
+
 		ns := m.pods.Items()
 		sort.SliceStable(ns, func(i, j int) bool {
 			return ns[i].FilterValue() < ns[j].FilterValue()
 		})
 		cmds = append(cmds, m.pods.SetItems(ns))
+		m.WorkaroundForGraphicalBug()
+
 		cmds = append(cmds, m.messageHandler.NextEvent)
 		//cmds = append(cmds, m.pods.NewStatusMessage(fmt.Sprintf("ADDED: %s", msg.Pod.K8sPod.Name)))
 	case pod.RemovedPodMsg:
@@ -207,7 +212,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 func (m PodSelectionModel) View() string {
 	switch m.focus {
 	case logs:
-		return fmt.Sprintf("%s\n%s\n%s", m.headerView(m.pods.SelectedItem().FilterValue()), m.logs.View(), m.footerView())
+		return fmt.Sprintf("%s\n%s\n%s", m.headerView(m.namespace, m.pods.SelectedItem().FilterValue()), m.logs.View(), m.footerView())
 	default:
 		return lipgloss.JoinVertical(
 			0.0,
@@ -242,4 +247,8 @@ func addLogLines(logs []string, line []string) []string {
 		logs = logs[1:]
 	}
 	return append(logs, line...)
+}
+
+func (m *PodSelectionModel) WorkaroundForGraphicalBug() {
+	m.pods.SetShowPagination(true)
 }
