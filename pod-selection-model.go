@@ -128,6 +128,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 					panic("Casting went wrong")
 				}
 			case pods:
+				if m.pods.SelectedItem() == nil {
+					break
+				}
 				m.focus = logs
 				m.logs.namespace = m.namespace
 				m.logs.pod = m.pods.SelectedItem().FilterValue()
