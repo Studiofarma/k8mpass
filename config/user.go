@@ -28,6 +28,7 @@ func (u *UserService) Pin(ns string) {
 	if !slices.Contains(u.data.PinnedNamespaces, ns) {
 		u.data.PinnedNamespaces = append(u.data.PinnedNamespaces, ns)
 	}
+	slices.Sort(u.data.PinnedNamespaces)
 }
 
 func (u *UserService) Unpin(ns string) {
@@ -69,6 +70,7 @@ func loadFromFile(context string) userData {
 		_ = file.Close()
 	}(file)
 	namespaces := readLines(file)
+	slices.Sort(namespaces)
 	if err != nil {
 		return userData{}
 	}

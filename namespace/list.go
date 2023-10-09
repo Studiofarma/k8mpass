@@ -3,6 +3,7 @@ package namespace
 import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"time"
 )
 
 func New() list.Model {
@@ -14,6 +15,7 @@ func New() list.Model {
 	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle
 	l.SetStatusBarItemName("namespace", "namespaces")
+	l.StatusMessageLifetime = 3 * time.Second
 	l.Styles.NoItems.MarginLeft(2)
 	l.KeyMap.GoToEnd.Unbind()
 	l.KeyMap.Quit.SetKeys("ctrl+c")

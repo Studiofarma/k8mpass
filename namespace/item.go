@@ -60,6 +60,8 @@ func (n ItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	propertiesStyle := customPropertiesStyle.Copy()
 	if slices.Contains(n.Pinned, i.K8sNamespace.Name) {
 		nsStyle = nsStyle.Inherit(pinnedStyle)
+		namespace = "*" + namespace
+		nsStyle.MarginLeft(nsStyle.GetMarginLeft() - 1)
 	}
 	if index == m.Index() {
 		nsStyle = nsStyle.Inherit(selectedItemStyle).UnsetMarginBackground()
