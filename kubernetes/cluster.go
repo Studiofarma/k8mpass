@@ -21,7 +21,6 @@ type Cluster struct {
 	cs             *kubernetes.Clientset
 	namespaceWatch watch.Interface
 	podWatch       watch.Interface
-	logLines       chan string
 }
 
 func (c *Cluster) GetContext() string {

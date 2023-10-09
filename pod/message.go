@@ -35,14 +35,9 @@ type RoutedMsg struct {
 	Embedded tea.Msg
 }
 
-type NextLogLineMsg struct {
-	NextLines []string
-}
-
 func (m AddedPodMsg) isPodMessage()     {}
 func (m RemovedPodMsg) isPodMessage()   {}
 func (m WatchingPodsMsg) isPodMessage() {}
 func (m NextEventMsg) isPodMessage()    {}
 func (m RoutedMsg) isPodMessage()       {}
 func (m ErrorMsg) isPodMessage()        {}
-func (m NextLogLineMsg) isPodMessage()  {}

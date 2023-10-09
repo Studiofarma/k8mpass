@@ -1,4 +1,4 @@
-package main
+package log
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ var (
 	infoStyle = func() lipgloss.Style {
 		b := lipgloss.RoundedBorder()
 		b.Left = "┤"
-		return titleStyle.Copy().BorderStyle(b)
+		return logsTitleStyle.Copy().BorderStyle(b)
 	}()
 )
 
@@ -26,14 +26,14 @@ func NewViewport() viewport.Model {
 	return v
 }
 
-func (m PodSelectionModel) headerView(namespace string, pod string) string {
+func HeaderView(m viewport.Model, namespace string, pod string) string {
 	title := logsTitleStyle.Render(fmt.Sprintf("%s : %s", namespace, pod))
-	line := strings.Repeat("─", max(0, m.logs.Width-lipgloss.Width(title)))
+	line := strings.Repeat("─", max(0, m.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
-func (m PodSelectionModel) footerView() string {
-	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.logs.ScrollPercent()*100))
-	line := strings.Repeat("─", max(0, m.logs.Width-lipgloss.Width(info)))
+func FooterView(m viewport.Model) string {
+	info := infoStyle.Render(fmt.Sprintf("%3.f%%", m.ScrollPercent()*100))
+	line := strings.Repeat("─", max(0, m.Width-lipgloss.Width(info)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }

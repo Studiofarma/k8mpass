@@ -143,10 +143,9 @@ func (handler *MessageHandler) RunComand(command api.INamespaceOperation, namesp
 	return handler.service.RunK8mpassCommand(command.GetCommand(), namespace)
 }
 
-func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation, logs k8mpasskube.ILogService) *MessageHandler {
+func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation) *MessageHandler {
 	return &MessageHandler{
 		service:                      service,
-		logs:                         logs,
 		Extensions:                   extensions,
 		AvailableNamespaceOperations: ops,
 	}
@@ -163,23 +162,4 @@ func Route(cmds ...tea.Cmd) []tea.Cmd {
 		})
 	}
 	return ret
-}
-
-func (handler *MessageHandler) FollowLogs(namespace string, pod string, maxWidth int) {
-	err := handler.logs.GetLogReader(namespace, pod, maxWidth)
-	if err != nil {
-		return
-	}
-}
-
-func (handler *MessageHandler) GetNextLogLine() tea.Cmd {
-	return func() tea.Msg {
-		lines, closed := handler.logs.GetNextLogs()
-		if closed {
-			return nil
-		}
-		return NextLogLineMsg{
-			NextLines: lines,
-		}
-	}
 }

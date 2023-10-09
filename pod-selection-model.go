@@ -1,16 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"github.com/charmbracelet/bubbles/viewport"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/studiofarma/k8mpass/api"
-	"sort"
-	"strings"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/log"
 	"github.com/studiofarma/k8mpass/pod"
+	"sort"
 )
 
 type PodSelectionModel struct {
@@ -19,9 +16,7 @@ type PodSelectionModel struct {
 	operations     list.Model
 	namespace      string
 	focus          focus
-	logs           viewport.Model
-	logLines       []string
-	follow         bool
+	logs           LogsModel
 	dimensions     struct {
 		width  int
 		height int
@@ -50,6 +45,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 			height int
 		}{width: msg.Width, height: msg.Height}
 		m.UpdateSize()
+		lm, lCmd := m.logs.Update(msg)
+		m.logs = lm
+		cmds = append(cmds, lCmd)
 	case namespaceSelectedMsg:
 		m.namespace = msg.namespace
 		m.operations.Title = msg.namespace
@@ -117,13 +115,6 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		}
 		cmd := m.operations.NewStatusMessage(style.Render(msg.Message))
 		cmds = append(cmds, cmd)
-	case pod.NextLogLineMsg:
-		m.logLines = addLogLines(m.logLines, msg.NextLines)
-		m.logs.SetContent(strings.Join(m.logLines, "\n"))
-		if m.follow {
-			m.logs.GotoBottom()
-		}
-		cmds = append(cmds, m.messageHandler.GetNextLogLine())
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
@@ -138,15 +129,16 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				}
 			case pods:
 				m.focus = logs
-				m.messageHandler.FollowLogs(m.namespace, m.pods.SelectedItem().FilterValue(), m.dimensions.width)
-				cmds = append(cmds, m.messageHandler.GetNextLogLine())
-				m.logs.GotoBottom()
-				routedCmds = append(routedCmds, viewport.Sync(m.logs))
+				m.logs.namespace = m.namespace
+				m.logs.pod = m.pods.SelectedItem().FilterValue()
+				m.logs.logs = log.NewLogs()
+				cmds = append(cmds, m.logs.Init())
 			}
 		case "backspace", "esc":
 			switch m.focus {
 			case logs:
 				m.focus = pods
+				m.logs.Reset()
 			default:
 				m.pods.NewStatusMessage("")
 				cmds = append(cmds, func() tea.Msg {
@@ -184,12 +176,6 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				cmds = append(cmds, pod.Route(routedCmds...)...)
 				return m, tea.Batch(cmds...)
 			case logs:
-				if keypress == "f" {
-					if !m.follow {
-						m.logs.GotoBottom()
-					}
-					m.follow = !m.follow
-				}
 				logm, logCmd := m.logs.Update(msg)
 				m.logs = logm
 				routedCmds = append(cmds, logCmd)
@@ -212,7 +198,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 func (m PodSelectionModel) View() string {
 	switch m.focus {
 	case logs:
-		return fmt.Sprintf("%s\n%s\n%s", m.headerView(m.namespace, m.pods.SelectedItem().FilterValue()), m.logs.View(), m.footerView())
+		return m.logs.View()
 	default:
 		return lipgloss.JoinVertical(
 			0.0,
@@ -238,15 +224,6 @@ func (m *PodSelectionModel) UpdateSize() {
 	m.pods.SetHeight(m.dimensions.height - opsHeight)
 	m.operations.SetWidth(m.dimensions.width)
 	m.pods.SetWidth(m.dimensions.width)
-	m.logs.Width = m.dimensions.width
-	m.logs.Height = m.dimensions.height - 6
-}
-
-func addLogLines(logs []string, line []string) []string {
-	if len(logs) >= 1000 {
-		logs = logs[1:]
-	}
-	return append(logs, line...)
 }
 
 func (m *PodSelectionModel) WorkaroundForGraphicalBug() {

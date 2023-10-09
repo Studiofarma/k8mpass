@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/studiofarma/k8mpass/api"
 	"github.com/studiofarma/k8mpass/kubernetes"
+	"github.com/studiofarma/k8mpass/log"
 	"time"
 
 	"github.com/studiofarma/k8mpass/pod"
@@ -44,12 +45,11 @@ func initialModel(plugins api.IPlugins) Model {
 				&cluster,
 				plugins.GetPodExtensions(),
 				plugins.GetNamespaceOperations(),
-				&cluster,
 			),
 			operations: initializeOperationList(),
-			logs:       NewViewport(),
-			logLines:   make([]string, 0),
-			follow:     true,
+			logs: NewLogModel(
+				&cluster,
+			),
 		},
 	}
 }
@@ -94,6 +94,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		pm, pmCmd := m.podModel.Update(msg)
 		m.podModel = pm
 		cmds = append(cmds, pmCmd)
+	case log.Message:
+		lm, lmCmd := m.podModel.logs.Update(msg)
+		m.podModel.logs = lm
+		cmds = append(cmds, lmCmd)
 	default:
 		nm, nmCmd := m.namespaceModel.Update(msg)
 		pm, pmCmd := m.podModel.Update(msg)
