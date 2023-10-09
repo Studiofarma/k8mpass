@@ -5,7 +5,7 @@ import "github.com/charmbracelet/lipgloss"
 var (
 	pageHeight       = 20
 	pageWidth        = 80
-	nameMaxLength    = 30
+	nameMaxLength    = 50
 	propertyMaxWidth = 15
 )
 
