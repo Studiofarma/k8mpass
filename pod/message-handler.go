@@ -3,12 +3,11 @@ package pod
 import (
 	"context"
 	"fmt"
-	"github.com/studiofarma/k8mpass/api"
-	"log"
-
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/studiofarma/k8mpass/api"
 	k8mpasskube "github.com/studiofarma/k8mpass/kubernetes"
 	v1 "k8s.io/api/core/v1"
+	"log"
 )
 
 type MessageHandler struct {
@@ -166,10 +165,21 @@ func Route(cmds ...tea.Cmd) []tea.Cmd {
 	return ret
 }
 
-func (handler *MessageHandler) GetLogs(namespace string, pod string, maxWidth int) string {
-	logs, err := handler.logs.GetLogReader(namespace, pod, maxWidth)
+func (handler *MessageHandler) FollowLogs(namespace string, pod string, maxWidth int) {
+	err := handler.logs.GetLogReader(namespace, pod, maxWidth)
 	if err != nil {
-		return ""
+		return
 	}
-	return logs
+}
+
+func (handler *MessageHandler) GetNextLogLine() tea.Cmd {
+	return func() tea.Msg {
+		lines, closed := handler.logs.GetNextLogs()
+		if closed {
+			return nil
+		}
+		return NextLogLineMsg{
+			NextLines: lines,
+		}
+	}
 }

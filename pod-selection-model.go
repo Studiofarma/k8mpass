@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/studiofarma/k8mpass/api"
 	"sort"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +20,8 @@ type PodSelectionModel struct {
 	namespace      string
 	focus          focus
 	logs           viewport.Model
+	logLines       []string
+	follow         bool
 	dimensions     struct {
 		width  int
 		height int
@@ -109,6 +112,13 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		}
 		cmd := m.operations.NewStatusMessage(style.Render(msg.Message))
 		cmds = append(cmds, cmd)
+	case pod.NextLogLineMsg:
+		m.logLines = addLogLines(m.logLines, msg.NextLines)
+		m.logs.SetContent(strings.Join(m.logLines, "\n"))
+		if m.follow {
+			m.logs.GotoBottom()
+		}
+		cmds = append(cmds, m.messageHandler.GetNextLogLine())
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter":
@@ -123,7 +133,9 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				}
 			case pods:
 				m.focus = logs
-				m.logs.SetContent(m.messageHandler.GetLogs(m.namespace, m.pods.SelectedItem().FilterValue(), m.dimensions.width))
+				m.messageHandler.FollowLogs(m.namespace, m.pods.SelectedItem().FilterValue(), m.dimensions.width)
+				cmds = append(cmds, m.messageHandler.GetNextLogLine())
+				m.logs.GotoBottom()
 				routedCmds = append(routedCmds, viewport.Sync(m.logs))
 			}
 		case "backspace", "esc":
@@ -167,6 +179,12 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				cmds = append(cmds, pod.Route(routedCmds...)...)
 				return m, tea.Batch(cmds...)
 			case logs:
+				if keypress == "f" {
+					if !m.follow {
+						m.logs.GotoBottom()
+					}
+					m.follow = !m.follow
+				}
 				logm, logCmd := m.logs.Update(msg)
 				m.logs = logm
 				routedCmds = append(cmds, logCmd)
@@ -217,4 +235,11 @@ func (m *PodSelectionModel) UpdateSize() {
 	m.pods.SetWidth(m.dimensions.width)
 	m.logs.Width = m.dimensions.width
 	m.logs.Height = m.dimensions.height - 6
+}
+
+func addLogLines(logs []string, line []string) []string {
+	if len(logs) >= 1000 {
+		logs = logs[1:]
+	}
+	return append(logs, line...)
 }

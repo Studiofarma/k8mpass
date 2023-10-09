@@ -48,6 +48,8 @@ func initialModel(plugins api.IPlugins) Model {
 			),
 			operations: initializeOperationList(),
 			logs:       NewViewport(),
+			logLines:   make([]string, 0),
+			follow:     true,
 		},
 	}
 }

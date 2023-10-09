@@ -1,34 +1,28 @@
 package kubernetes
 
 import (
-	"bytes"
+	"bufio"
 	"context"
-	"io"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/rest"
 	"strings"
 	"time"
 )
 
 type ILogService interface {
-	GetLogReader(nameSpace string, podName string, maxWidth int) (string, error)
-	GetNextLog() string
+	GetLogReader(nameSpace string, podName string, maxWidth int) error
+	GetNextLogs() ([]string, bool)
 }
 
-func (c *Cluster) GetLogReader(nameSpace string, podName string, maxWidth int) (string, error) {
-	var tailLines int64 = 100
+func (c *Cluster) GetLogReader(nameSpace string, podName string, maxWidth int) error {
 	podLogOpts := v1.PodLogOptions{
-		TailLines: &tailLines,
+		Follow: true,
 	}
 	req := c.cs.CoreV1().Pods(nameSpace).GetLogs(podName, &podLogOpts)
-	podLogs, err := req.Stream(context.TODO())
-	if err != nil {
-		return "", err
-	}
-	c.logReader = &podLogs
 
-	buf := bytes.Buffer{}
-	_, err = io.Copy(&buf, podLogs)
-	return truncateLines(buf.String(), maxWidth), nil
+	c.logLines = make(chan string)
+	go LogToChannel(c.logLines, req, maxWidth)
+	return nil
 }
 
 func truncateLines(s string, maxWidth int) string {
@@ -42,14 +36,33 @@ func truncateLines(s string, maxWidth int) string {
 	return strings.Join(lines, "\n")
 }
 
-func (c *Cluster) GetNextLog() string {
-	t := time.NewTimer(10 * time.Second)
-
-	buf := make([]byte, 256)
-	_, err := (*c.logReader).Read(buf)
-	if err == io.EOF {
-		return ""
+func (c *Cluster) GetNextLogs() ([]string, bool) {
+	timer := time.NewTimer(1 * time.Second)
+	var lines []string
+	closed := false
+out:
+	for i := 0; i < 1000; i++ {
+		select {
+		case line, open := <-c.logLines:
+			lines = append(lines, line)
+			closed = closed || !open
+			i++
+		case <-timer.C:
+			break out
+		}
 	}
-	<-t.C
-	return ""
+	return lines, closed
+}
+
+func LogToChannel(ch chan string, req *rest.Request, maxWidth int) {
+	podLogs, err := req.Stream(context.TODO())
+	if err != nil {
+		return
+	}
+	scanner := bufio.NewScanner(podLogs)
+	for scanner.Scan() {
+		truncatedLine := truncateLines(scanner.Text(), maxWidth)
+		ch <- truncatedLine
+	}
+	close(ch)
 }

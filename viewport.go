@@ -23,7 +23,6 @@ var (
 
 func NewViewport() viewport.Model {
 	v := viewport.New(0, 0)
-	v.Style = v.Style.BorderStyle(lipgloss.NormalBorder())
 	return v
 }
 
