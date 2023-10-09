@@ -13,6 +13,7 @@ import (
 
 type MessageHandler struct {
 	service                      k8mpasskube.IPodService
+	logs                         k8mpasskube.ILogService
 	Extensions                   []api.IPodExtension
 	AvailableNamespaceOperations []api.INamespaceOperation
 }
@@ -143,9 +144,10 @@ func (handler *MessageHandler) RunComand(command api.INamespaceOperation, namesp
 	return handler.service.RunK8mpassCommand(command.GetCommand(), namespace)
 }
 
-func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation) *MessageHandler {
+func NewHandler(service k8mpasskube.IPodService, extensions []api.IPodExtension, ops []api.INamespaceOperation, logs k8mpasskube.ILogService) *MessageHandler {
 	return &MessageHandler{
 		service:                      service,
+		logs:                         logs,
 		Extensions:                   extensions,
 		AvailableNamespaceOperations: ops,
 	}
@@ -162,4 +164,12 @@ func Route(cmds ...tea.Cmd) []tea.Cmd {
 		})
 	}
 	return ret
+}
+
+func (handler *MessageHandler) GetLogs(namespace string, pod string, maxWidth int) string {
+	logs, err := handler.logs.GetLogReader(namespace, pod, maxWidth)
+	if err != nil {
+		return ""
+	}
+	return logs
 }

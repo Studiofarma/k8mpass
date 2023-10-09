@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"github.com/studiofarma/k8mpass/config"
+	"io"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -21,6 +22,7 @@ type Cluster struct {
 	cs             *kubernetes.Clientset
 	namespaceWatch watch.Interface
 	podWatch       watch.Interface
+	logReader      *io.ReadCloser
 }
 
 func (c *Cluster) GetContext() string {

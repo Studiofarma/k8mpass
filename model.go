@@ -44,8 +44,10 @@ func initialModel(plugins api.IPlugins) Model {
 				&cluster,
 				plugins.GetPodExtensions(),
 				plugins.GetNamespaceOperations(),
+				&cluster,
 			),
 			operations: initializeOperationList(),
+			logs:       NewViewport(),
 		},
 	}
 }

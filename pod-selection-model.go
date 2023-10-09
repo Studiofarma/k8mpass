@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/studiofarma/k8mpass/api"
 	"sort"
@@ -15,11 +17,12 @@ type PodSelectionModel struct {
 	pods           list.Model
 	operations     list.Model
 	namespace      string
+	focus          focus
+	logs           viewport.Model
 	dimensions     struct {
 		width  int
 		height int
 	}
-	focus focus
 }
 
 type focus int8
@@ -27,6 +30,7 @@ type focus int8
 const (
 	operations focus = 0
 	pods       focus = 1
+	logs       focus = 2
 )
 
 func (m PodSelectionModel) Init() tea.Cmd {
@@ -117,12 +121,21 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				} else {
 					panic("Casting went wrong")
 				}
+			case pods:
+				m.focus = logs
+				m.logs.SetContent(m.messageHandler.GetLogs(m.namespace, m.pods.SelectedItem().FilterValue(), m.dimensions.width))
+				routedCmds = append(routedCmds, viewport.Sync(m.logs))
 			}
 		case "backspace", "esc":
-			m.pods.NewStatusMessage("")
-			cmds = append(cmds, func() tea.Msg {
-				return backToNamespaceSelectionMsg{}
-			})
+			switch m.focus {
+			case logs:
+				m.focus = pods
+			default:
+				m.pods.NewStatusMessage("")
+				cmds = append(cmds, func() tea.Msg {
+					return backToNamespaceSelectionMsg{}
+				})
+			}
 		case "tab":
 			switch m.focus {
 			case operations:
@@ -153,6 +166,12 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 
 				cmds = append(cmds, pod.Route(routedCmds...)...)
 				return m, tea.Batch(cmds...)
+			case logs:
+				logm, logCmd := m.logs.Update(msg)
+				m.logs = logm
+				routedCmds = append(cmds, logCmd)
+				cmds = append(cmds, pod.Route(routedCmds...)...)
+				return m, tea.Batch(cmds...)
 			}
 		}
 	}
@@ -168,11 +187,16 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 }
 
 func (m PodSelectionModel) View() string {
-	return lipgloss.JoinVertical(
-		0.0,
-		m.operations.View(),
-		m.pods.View(),
-	)
+	switch m.focus {
+	case logs:
+		return fmt.Sprintf("%s\n%s\n%s", m.headerView(m.pods.SelectedItem().FilterValue()), m.logs.View(), m.footerView())
+	default:
+		return lipgloss.JoinVertical(
+			0.0,
+			m.operations.View(),
+			m.pods.View(),
+		)
+	}
 }
 
 func (m *PodSelectionModel) Reset() {
@@ -191,4 +215,6 @@ func (m *PodSelectionModel) UpdateSize() {
 	m.pods.SetHeight(m.dimensions.height - opsHeight)
 	m.operations.SetWidth(m.dimensions.width)
 	m.pods.SetWidth(m.dimensions.width)
+	m.logs.Width = m.dimensions.width
+	m.logs.Height = m.dimensions.height - 6
 }
