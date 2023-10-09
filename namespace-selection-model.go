@@ -166,6 +166,9 @@ func SortWithFavourites(items []list.Item, pinned []string) []list.Item {
 	}
 	var res []list.Item
 	for _, n := range sortedNames {
+		if mappedItems[n] == nil {
+			continue
+		}
 		res = append(res, mappedItems[n])
 	}
 	return res
