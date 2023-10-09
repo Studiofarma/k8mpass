@@ -110,6 +110,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			m.userService.Pin(m.namespaces.SelectedItem().FilterValue())
 			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
 			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.userService.GetPinnedNamespaces())))
+			m.WorkaroundForGraphicalBug()
 
 		case "u":
 			m.userService.Unpin(m.namespaces.SelectedItem().FilterValue())
@@ -119,7 +120,7 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 			})
 			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
 			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(ns, m.userService.GetPinnedNamespaces())))
-
+			m.WorkaroundForGraphicalBug()
 		}
 	}
 	switch msg := msg.(type) {
