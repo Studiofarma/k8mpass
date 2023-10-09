@@ -1,14 +1,16 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/joho/godotenv"
 	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/config"
+	api2 "github.com/studiofarma/k8mpass/extensions/api"
 	"log"
 	"os"
 	"plugin"
+	"runtime"
 )
 
 func main() {
@@ -21,7 +23,7 @@ func main() {
 	}
 	plugins := loadPlugins()
 	log.Println("Loaded config correctly")
-
+	config.LoadFlags()
 	p := tea.NewProgram(
 		initialModel(plugins),
 		tea.WithAltScreen(),
@@ -33,18 +35,25 @@ func main() {
 	}
 }
 
-//func loadPlugins() api.IPlugins {
-//	return Plugins
-//}
-
 func loadPlugins() api.IPlugins {
-	pluginPath := flag.String("plugin", "", "path to plugin file")
-	flag.Parse()
-	if *pluginPath == "" {
+	switch runtime.GOOS {
+	case "windows":
+		return loadPluginsWindows()
+	default:
+		return loadPluginsLinux()
+	}
+}
+
+func loadPluginsWindows() api.IPlugins {
+	return api2.SharedPlugins
+}
+
+func loadPluginsLinux() api.IPlugins {
+	if config.Plugin == "" {
 		log.Println("No plugin to load")
 		return api.Plugins{}
 	}
-	plug, err := plugin.Open(*pluginPath)
+	plug, err := plugin.Open(config.Plugin)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

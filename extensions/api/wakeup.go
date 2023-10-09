@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -26,19 +26,19 @@ const (
 	awake    = "Awake!"
 )
 
-var namespaceOperations = []api.INamespaceOperation{
+var NamespaceOperations = []api.INamespaceOperation{
 	WakeUpReviewOperation,
 	OpenDbmsOperation,
 	OpenApplicationOperation,
 }
 
-var namespaceExtensions = []api.INamespaceExtension{
+var NamespaceExtensions = []api.INamespaceExtension{
 	ReviewAppSleepStatus,
 	NamespaceAgeProperty,
 	//PodVersion,
 }
 
-var podExtensions = []api.IPodExtension{
+var PodExtensions = []api.IPodExtension{
 	PodAgeProperty,
 	PodVersion,
 }

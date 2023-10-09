@@ -12,6 +12,7 @@ import (
 	"io"
 	v1 "k8s.io/api/core/v1"
 	"log"
+	"runtime"
 	"slices"
 	"sort"
 )
@@ -110,6 +111,10 @@ func namespaceStatusStyle(ns Item) lipgloss.Style {
 }
 
 func slightlyBrighterTerminalColor() lipgloss.Color {
+	switch runtime.GOOS {
+	case "windows":
+		return lipgloss.Color("#444852")
+	}
 	multiplier := 1.5
 	terminalColor := termenv.BackgroundColor()
 	rgb := termenv.ConvertToRGB(terminalColor)

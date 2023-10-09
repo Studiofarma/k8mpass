@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"context"
-	"flag"
+	"github.com/studiofarma/k8mpass/config"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -111,10 +111,5 @@ func configPathFromEnvVar() string {
 }
 
 func configPathFromFlag() string {
-	path := flag.String("kubeconfig", "", "specify kubernetes config file to use")
-	flag.Parse()
-	if path == nil {
-		return *path
-	}
-	return ""
+	return config.Config
 }

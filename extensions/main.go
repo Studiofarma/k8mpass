@@ -1,9 +1,7 @@
 package main
 
-import "github.com/studiofarma/k8mpass/api"
+import (
+	api2 "github.com/studiofarma/k8mpass/extensions/api"
+)
 
-var Plugins = api.Plugins{
-	NamespaceOperations: namespaceOperations,
-	NamespaceExtensions: namespaceExtensions,
-	PodExtensions:       podExtensions,
-}
+var Plugins = api2.SharedPlugins
