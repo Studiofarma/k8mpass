@@ -21,9 +21,9 @@ func main() {
 	} else {
 		log.Println("Loaded .env correctly")
 	}
+	config.LoadFlags()
 	plugins := loadPlugins()
 	log.Println("Loaded config correctly")
-	config.LoadFlags()
 	p := tea.NewProgram(
 		initialModel(plugins),
 		tea.WithAltScreen(),
