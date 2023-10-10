@@ -7,27 +7,38 @@ import (
 )
 
 type Logs struct {
-	Lines   []string
-	channel chan string
+	lines        []string
+	channel      chan string
+	lineRenderer func(line string) string
 }
 
 func NewLogs() *Logs {
 	return &Logs{
-		Lines:   make([]string, 0),
-		channel: make(chan string),
+		lines:        make([]string, 0),
+		channel:      make(chan string),
+		lineRenderer: JsonRendered,
+	}
+}
+
+func (l *Logs) AppendLines(line string) {
+	if l.lineRenderer == nil {
+		l.lines = append(l.lines, line)
+	} else {
+		renderedLine := l.lineRenderer(line)
+		l.lines = append(l.lines, renderedLine)
 	}
 }
 
 func (l Logs) TruncatedLines(length int) []string {
-	return truncateList(l.Lines, length)
+	return truncateList(l.lines, length)
 }
 
 func (l Logs) FilterAndTruncate(filterBy string, length int) []string {
 	if filterBy == "" {
-		return truncateList(l.Lines, length)
+		return truncateList(l.lines, length)
 	}
 	var filteredList []string
-	filteredList = slices.Filter(filteredList, l.Lines, func(s string) bool {
+	filteredList = slices.Filter(filteredList, l.lines, func(s string) bool {
 		return strings.Contains(s, filterBy)
 	})
 	return truncateList(filteredList, length)

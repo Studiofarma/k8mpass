@@ -41,7 +41,7 @@ func CacheLogs(logs *Logs, newlogs chan interface{}) {
 		case newlogs <- "something":
 		default:
 		}
-		logs.Lines = append(logs.Lines, line)
+		logs.AppendLines(line)
 	}
 }
 
