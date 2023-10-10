@@ -36,7 +36,11 @@ func (handler *MessageHandler) CloseLogs() {
 
 func CacheLogs(logs *Logs, newlogs chan interface{}) {
 	for line := range logs.channel {
-		newlogs <- "something"
+		//Add message to queue if not full
+		select {
+		case newlogs <- "something":
+		default:
+		}
 		logs.Lines = append(logs.Lines, line)
 	}
 }

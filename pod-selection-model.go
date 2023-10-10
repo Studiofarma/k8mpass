@@ -136,12 +136,22 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 				m.logs.pod = m.pods.SelectedItem().FilterValue()
 				m.logs.logs = log.NewLogs()
 				cmds = append(cmds, m.logs.Init())
+			case logs:
+				newM, cmd := m.logs.Update(msg)
+				m.logs = newM
+				cmds = append(cmds, cmd)
 			}
 		case "backspace", "esc":
 			switch m.focus {
 			case logs:
-				m.focus = pods
-				m.logs.Reset()
+				if m.logs.filter.Value() != "" {
+					newM, cmd := m.logs.Update(msg)
+					m.logs = newM
+					cmds = append(cmds, cmd)
+				} else {
+					m.focus = pods
+					m.logs.Reset()
+				}
 			default:
 				m.pods.NewStatusMessage("")
 				cmds = append(cmds, func() tea.Msg {

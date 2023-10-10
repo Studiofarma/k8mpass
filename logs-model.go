@@ -65,17 +65,28 @@ func (m LogsModel) Update(msg tea.Msg) (LogsModel, tea.Cmd) {
 		routedCmds = append(routedCmds, fmCmd)
 
 	case tea.KeyMsg:
-		if key := msg.String(); key == "f" {
-			m.filtering = !m.filtering
-			cmds = append(cmds, textinput.Blink)
+		if key := msg.String(); key == "esc" {
+			m.filtering = false
+			m.filter.Blur()
+			m.filter.Reset()
+			m.view.SetContent(strings.Join(m.logs.FilterAndTruncate(m.filter.Value(), m.view.Width), "\n"))
+		} else if key == "enter" {
+			m.filtering = false
+			m.filter.Blur()
 		} else if m.filtering {
 			newM, cmd := m.filter.Update(msg)
 			m.filter = newM
-			cmds = append(cmds, cmd)
+			routedCmds = append(routedCmds, cmd)
+			m.view.SetContent(strings.Join(m.logs.FilterAndTruncate(m.filter.Value(), m.view.Width), "\n"))
+		} else if key := msg.String(); key == "/" {
+			m.filtering = true
+			routedCmds = append(routedCmds, m.filter.Focus())
+		} else if key == "f" {
+			m.follow = !m.follow
 		} else {
 			newM, cmd := m.view.Update(msg)
 			m.view = newM
-			cmds = append(cmds, cmd)
+			routedCmds = append(routedCmds, cmd)
 		}
 	default:
 		newM, cmd := m.view.Update(msg)
@@ -97,7 +108,7 @@ func (m LogsModel) View() string {
 func NewLogModel(service kubernetes.ILogService) LogsModel {
 	text := textinput.New()
 	text.PromptStyle.Width(30)
-	text.Placeholder = "filtering"
+	text.Placeholder = "Filter..."
 	return LogsModel{
 		handler:   log.NewHandler(service),
 		view:      log.NewViewport(),
@@ -117,12 +128,18 @@ func (m *LogsModel) Reset() {
 func (m LogsModel) headerView(namespace string, pod string) string {
 	title := log.LogsTitleStyle.Render(fmt.Sprintf("%s : %s", namespace, pod))
 	filter := log.LogsTitleStyle.Render(m.filter.View())
-	line := strings.Repeat("─", max(0, m.view.Width-lipgloss.Width(title)))
+	line := strings.Repeat("─", max(0, m.view.Width-lipgloss.Width(title+filter)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, filter, line)
 }
 
 func (m LogsModel) footerView() string {
-	info := log.InfoStyle.Render(fmt.Sprintf("%3.f%%", m.view.ScrollPercent()*100))
+	var following string
+	if m.follow {
+		following = "Y"
+	} else {
+		following = "N"
+	}
+	info := log.InfoStyle.Render(fmt.Sprintf("Following:%v %3.f%%", following, m.view.ScrollPercent()*100))
 	line := strings.Repeat("─", max(0, m.view.Width-lipgloss.Width(info)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
 }
