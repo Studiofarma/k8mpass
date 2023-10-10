@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,6 +21,7 @@ type LogsModel struct {
 	logs      *log.Logs
 	follow    bool
 	filter    textinput.Model
+	help      help.Model
 	filtering bool
 }
 
@@ -109,12 +112,14 @@ func NewLogModel(service kubernetes.ILogService) LogsModel {
 	text := textinput.New()
 	text.PromptStyle.Width(30)
 	text.Placeholder = "Filter..."
+	h := help.New()
 	return LogsModel{
 		handler:   log.NewHandler(service),
 		view:      log.NewViewport(),
 		follow:    true,
 		filter:    text,
 		filtering: false,
+		help:      h,
 	}
 }
 
@@ -139,7 +144,26 @@ func (m LogsModel) footerView() string {
 	} else {
 		following = "N"
 	}
+	keys := []key.Binding{
+		key.NewBinding(
+			key.WithKeys("f"),
+			key.WithHelp("f", "auto follow"),
+		),
+		key.NewBinding(
+			key.WithKeys("/"),
+			key.WithHelp("/", "filter"),
+		),
+		key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back"),
+		),
+		key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "confirm"),
+		),
+	}
 	info := log.InfoStyle.Render(fmt.Sprintf("Following:%v %3.f%%", following, m.view.ScrollPercent()*100))
-	line := strings.Repeat("─", max(0, m.view.Width-lipgloss.Width(info)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
+	h := log.InfoStyle.Render(m.help.ShortHelpView(keys))
+	line := strings.Repeat("─", max(0, m.view.Width-lipgloss.Width(info))-lipgloss.Width(h))
+	return lipgloss.JoinHorizontal(lipgloss.Center, h, line, info)
 }
