@@ -1,15 +1,11 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/google/uuid"
 	"github.com/studiofarma/k8mpass/api"
-	batchv1 "k8s.io/api/batch/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log"
 	"net/http"
@@ -27,9 +23,9 @@ const (
 )
 
 var NamespaceOperations = []api.INamespaceOperation{
-	WakeUpReviewOperation,
-	OpenDbmsOperation,
-	OpenApplicationOperation,
+	api.NewCronjobOperation("Wake up!", "scale-to-zero-wakeup", "Wake up triggered"),
+	api.NewIngressOperation("Open DBMS in browser", "dbms", "Now go delete the database"),
+	api.NewIngressOperation("Open application in browser", "g3pharmacy", "It's not a bug, it's a feature"),
 }
 
 var NamespaceExtensions = []api.INamespaceExtension{
@@ -224,54 +220,6 @@ func checkIfReviewAppIsAsleep(namespace string) tea.Cmd {
 func CheckSleepingStatusCondition(*kubernetes.Clientset, string) bool {
 	_, ok := os.LookupEnv("THANOS_URL")
 	return ok
-}
-
-var WakeUpReviewOperation = api.NamespaceOperation{
-	Name:      "Wake up review app",
-	Condition: WakeUpReviewCondition,
-	Command: func(clientset *kubernetes.Clientset, namespace string) tea.Cmd {
-		return func() tea.Msg {
-			err := wakeupReview(clientset, namespace)
-			if err != nil {
-				return api.NoOutputResultMsg{false, err.Error()}
-			}
-			return api.NoOutputResultMsg{true, "We woke it up!"}
-		}
-	},
-}
-
-func wakeupReview(clientset *kubernetes.Clientset, namespace string) error {
-	cronjobs := clientset.BatchV1().CronJobs(namespace)
-	cronjob, err := cronjobs.Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	newUUID, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-
-	jobSpec := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("k8mpass-wakeup-%s", newUUID.String()),
-			Namespace: namespace,
-		},
-		Spec: cronjob.Spec.JobTemplate.Spec,
-	}
-	jobs := clientset.BatchV1().Jobs(namespace)
-
-	_, err = jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
-
-	return err
-}
-
-func WakeUpReviewCondition(cs *kubernetes.Clientset, namespace string) bool {
-	_, err := cs.BatchV1().CronJobs(namespace).Get(context.TODO(), "scale-to-zero-wakeup", metav1.GetOptions{})
-	if err != nil {
-		return false
-	}
-	return true
 }
 
 func Openbrowser(url string) {
