@@ -74,6 +74,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			m.namespaceModel.userService.Persist()
 			return m, tea.Quit
+		case "f5":
+			cmds = append(cmds, tea.ClearScreen)
 		default:
 			switch m.state {
 			case NamespaceSelection:

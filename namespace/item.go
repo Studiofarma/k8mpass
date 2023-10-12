@@ -113,12 +113,16 @@ func namespaceStatusStyle(ns Item) lipgloss.Style {
 }
 
 func slightlyBrighterTerminalColor() lipgloss.Color {
+	def := "#444852"
 	switch runtime.GOOS {
 	case "windows":
-		return lipgloss.Color("#444852")
+		return lipgloss.Color(def)
 	}
 	multiplier := 1.5
 	terminalColor := termenv.BackgroundColor()
+	if terminalColor.(termenv.ANSIColor) == termenv.ANSIBlack {
+		return lipgloss.Color(def)
+	}
 	rgb := termenv.ConvertToRGB(terminalColor)
 	r, g, b := colorful.Color{
 		R: rgb.R * multiplier,

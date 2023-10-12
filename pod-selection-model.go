@@ -144,7 +144,7 @@ func (m PodSelectionModel) Update(msg tea.Msg) (PodSelectionModel, tea.Cmd) {
 		case "backspace", "esc":
 			switch m.focus {
 			case logs:
-				if m.logs.filter.Value() != "" {
+				if m.logs.filter.Focused() {
 					newM, cmd := m.logs.Update(msg)
 					m.logs = newM
 					cmds = append(cmds, cmd)

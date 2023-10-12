@@ -62,6 +62,11 @@ func (nh *MessageHandler) WatchNamespaces(resourceVersion string) tea.Cmd {
 
 func (nh *MessageHandler) GetNamespaces() tea.Cmd {
 	res, err := nh.service.GetNamespaces()
+	if err != nil {
+		return func() tea.Msg {
+			return ErrorMsg{err}
+		}
+	}
 	return tea.Sequence(
 		func() tea.Msg {
 			if err != nil {
