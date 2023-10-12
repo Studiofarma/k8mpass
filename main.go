@@ -6,7 +6,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/studiofarma/k8mpass/api"
 	"github.com/studiofarma/k8mpass/config"
-	api2 "github.com/studiofarma/k8mpass/extensions/api"
 	"log"
 	"os"
 	"plugin"
@@ -38,16 +37,11 @@ func main() {
 func loadPlugins() api.IPlugins {
 	switch runtime.GOOS {
 	case "windows":
-		return loadPluginsWindows()
+		return api.Plugins{}
 	default:
 		return loadPluginsLinux()
 	}
 }
-
-func loadPluginsWindows() api.IPlugins {
-	return api2.SharedPlugins
-}
-
 func loadPluginsLinux() api.IPlugins {
 	if config.Plugin == "" {
 		log.Println("No plugin to load")
