@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/uuid"
@@ -61,14 +63,13 @@ func triggerCronjob(clientset *kubernetes.Clientset, namespace string, cronjobNa
 		return err
 	}
 
-	newUUID, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-
+	newUUID := uuid.New()
+	h := md5.New()
+	h.Write([]byte(newUUID.String()))
+	hash := hex.EncodeToString(h.Sum(nil))
 	jobSpec := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("k8mpass-%s-%s", cronjobName, newUUID.String()[27:35]),
+			Name:      fmt.Sprintf("k8mpass-%s-%s", cronjobName, hash[:10]),
 			Namespace: namespace,
 		},
 		Spec: cronjob.Spec.JobTemplate.Spec,
