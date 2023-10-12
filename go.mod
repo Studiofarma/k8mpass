@@ -3,9 +3,8 @@ module github.com/studiofarma/k8mpass
 go 1.21
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/charmbracelet/bubbletea v0.24.2
-	github.com/charmbracelet/lipgloss v0.8.0
+	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/google/uuid v1.3.1
 	github.com/joho/godotenv v1.5.1
 	k8s.io/api v0.28.2
