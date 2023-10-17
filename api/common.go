@@ -11,7 +11,6 @@ import (
 	"k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"log"
 	"os/exec"
 	"runtime"
 	"slices"
@@ -113,7 +112,10 @@ func IngressCommand(ingress string, output string) K8mpassCommand {
 				return NoOutputResultMsg{false, "Ingress not found"}
 			}
 			url := ingresses.Items[idx].Spec.Rules[0].Host
-			openbrowser("https://" + url)
+			err = openbrowser("https://" + url)
+			if err != nil {
+				return NoOutputResultMsg{false, err.Error()}
+			}
 
 			return NoOutputResultMsg{
 				true,
@@ -123,21 +125,15 @@ func IngressCommand(ingress string, output string) K8mpassCommand {
 	}
 }
 
-func openbrowser(url string) {
-	var err error
-
+func openbrowser(url string) error {
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", url).Start()
+		return exec.Command("xdg-open", url).Start()
 	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 	case "darwin":
-		err = exec.Command("open", url).Start()
+		return exec.Command("open", url).Start()
 	default:
-		err = fmt.Errorf("unsupported platform")
+		return fmt.Errorf("unsupported platform")
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
-
 }
