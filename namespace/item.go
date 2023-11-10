@@ -120,7 +120,7 @@ func slightlyBrighterTerminalColor() lipgloss.Color {
 	}
 	multiplier := 1.5
 	terminalColor := termenv.BackgroundColor()
-	if terminalColor.(termenv.ANSIColor) == termenv.ANSIBlack {
+	if ansiColor, ok := terminalColor.(termenv.ANSIColor); ok && ansiColor == termenv.ANSIBlack {
 		return lipgloss.Color(def)
 	}
 	rgb := termenv.ConvertToRGB(terminalColor)
