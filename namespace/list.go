@@ -15,6 +15,7 @@ func New() list.Model {
 	l.SetShowFilter(true)
 	l.Styles.Title = titleStyle
 	l.SetStatusBarItemName("namespace", "namespaces")
+	l.Filter = NamespaceFilter
 	l.StatusMessageLifetime = 3 * time.Second
 	l.Styles.NoItems.MarginLeft(2)
 	l.KeyMap.GoToEnd.Unbind()

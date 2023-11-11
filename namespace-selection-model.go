@@ -107,9 +107,14 @@ func (m NamespaceSelectionModel) Update(msg tea.Msg) (NamespaceSelectionModel, t
 				panic("Casting went wrong")
 			}
 		case "p":
-			m.userService.Pin(m.namespaces.SelectedItem().FilterValue())
+			selectedItem := m.namespaces.SelectedItem()
+			m.userService.Pin(selectedItem.FilterValue())
 			m.namespaces.SetDelegate(namespace.ItemDelegate{Pinned: m.userService.GetPinnedNamespaces()})
-			routedCmds = append(routedCmds, m.namespaces.SetItems(SortWithFavourites(m.namespaces.Items(), m.userService.GetPinnedNamespaces())))
+			m.WorkaroundForGraphicalBug()
+			sortedItems := SortWithFavourites(m.namespaces.Items(), m.userService.GetPinnedNamespaces())
+			newPosition := FindItem(sortedItems, selectedItem)
+			routedCmds = append(routedCmds, m.namespaces.SetItems(sortedItems))
+			m.namespaces.Select(newPosition)
 			m.WorkaroundForGraphicalBug()
 		case "u":
 			m.userService.Unpin(m.namespaces.SelectedItem().FilterValue())
