@@ -44,6 +44,7 @@ func (nh MessageHandler) NextEvent() tea.Msg {
 			Namespace: namespace,
 		}
 	case k8mpasskube.Closed, k8mpasskube.Error:
+		log.Printf("Closed namespace channel")
 		return nil
 	default:
 		return NextEventMsg{}
