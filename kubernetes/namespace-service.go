@@ -23,7 +23,7 @@ func (c *Cluster) GetNamespaces() (*v1.NamespaceList, error) {
 
 func (c *Cluster) GetNamespaceEvent() NamespaceEvent {
 	e, closed := <-c.namespaceWatch.ResultChan()
-	if closed {
+	if !closed {
 		return NamespaceEvent{
 			Type: Closed,
 		}
