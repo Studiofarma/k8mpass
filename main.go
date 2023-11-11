@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/joho/godotenv"
-	"github.com/studiofarma/k8mpass/api"
-	"github.com/studiofarma/k8mpass/config"
 	"log"
 	"os"
 	"plugin"
 	"runtime"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/joho/godotenv"
+	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/config"
 )
 
 func main() {
-	_ = os.Remove("debug/k8s_debug.log")
-	_, _ = tea.LogToFile("debug/k8s_debug.log", "DEBUG")
+	setupLogging()
 	if err := godotenv.Load(".env"); err != nil {
 		log.Println("Failed to load .env")
 	} else {
@@ -64,4 +65,19 @@ func loadPluginsLinux() api.IPlugins {
 		os.Exit(1)
 	}
 	return plugins
+}
+
+func setupLogging() {
+	userDir, err := os.UserCacheDir()
+	if err != nil {
+		return
+	}
+	debugDir := userDir + "/k8mpass/debug"
+	err = os.MkdirAll(debugDir, os.ModePerm)
+	if err != nil {
+		return
+	}
+	datetime := time.Now()
+	logFileName := fmt.Sprintf(debugDir+"/k8mpass_debug_%s", datetime.Format("2006_01_02_15_04_05"))
+	_, _ = tea.LogToFile(logFileName, "DEBUG")
 }
