@@ -1,63 +1,133 @@
 package main
 
 import (
-	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/studiofarma/k8mpass/api"
+	"github.com/studiofarma/k8mpass/kubernetes"
+	"github.com/studiofarma/k8mpass/log"
+	"time"
+
+	"github.com/studiofarma/k8mpass/pod"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/studiofarma/k8mpass/namespace"
 )
 
-type K8mpassModel struct {
-	error                    errMsg
-	cluster                  kubernetesCluster
-	clusterConnectionSpinner spinner.Model
-	isConnected              bool
-	command                  NamespaceOperation
+type Model struct {
+	error          errMsg
+	cluster        kubernetes.ICluster
+	namespaceModel NamespaceSelectionModel
+	podModel       PodSelectionModel
+	state          state
 }
 
-func initialModel() K8mpassModel {
-	s := spinner.New()
-	s.Spinner = spinner.Line
-	return K8mpassModel{
-		clusterConnectionSpinner: s,
-		command:                  WakeUpReviewOperation,
+type state int32
+
+const (
+	NamespaceSelection state = 0
+	PodSelection       state = 1
+)
+
+func initialModel(plugins api.IPlugins) Model {
+	cluster := kubernetes.Cluster{}
+	return Model{
+		cluster: &cluster,
+		state:   NamespaceSelection,
+		namespaceModel: NamespaceSelectionModel{
+			namespaces: namespace.New(),
+			messageHandler: namespace.NewHandler(
+				&cluster,
+				plugins.GetNamespaceExtensions()...,
+			),
+		},
+		podModel: PodSelectionModel{
+			pods: pod.New(),
+			messageHandler: pod.NewHandler(
+				&cluster,
+				plugins.GetPodExtensions(),
+				plugins.GetNamespaceOperations(),
+			),
+			operations: initializeOperationList(),
+			logs: NewLogModel(
+				&cluster,
+			),
+		},
 	}
 }
 
-func (m K8mpassModel) Init() tea.Cmd {
-	return tea.Batch(m.clusterConnectionSpinner.Tick, clusterConnect)
+func (m Model) Init() tea.Cmd {
+	return tea.Sequence(
+		func() tea.Msg {
+			return startupMsg{}
+		},
+		m.clusterConnect,
+	)
 }
 
-func (m K8mpassModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case errMsg:
 		m.error = msg
-		return m, tea.Quit
+		return m, tea.Tick(time.Second*5, func(t time.Time) tea.Msg { return tea.Quit })
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc":
+		case "ctrl+c":
+			m.namespaceModel.userService.Persist()
 			return m, tea.Quit
+		case "f5":
+			cmds = append(cmds, tea.ClearScreen)
+		default:
+			switch m.state {
+			case NamespaceSelection:
+				model, cmd := m.namespaceModel.Update(msg)
+				m.namespaceModel = model
+				cmds = append(cmds, cmd)
+			case PodSelection:
+				model, cmd := m.podModel.Update(msg)
+				m.podModel = model
+				cmds = append(cmds, cmd)
+			}
 		}
-	case clusterConnectedMsg:
-		m.isConnected = true
-		m.cluster.kubernetes = msg.clientset
-		command := m.command.Command(m, "review-devops-new-filldata")
-		cmds = append(cmds, command)
+	case namespace.Message:
+		nm, nmCmd := m.namespaceModel.Update(msg)
+		m.namespaceModel = nm
+		cmds = append(cmds, nmCmd)
+	case pod.Message:
+		pm, pmCmd := m.podModel.Update(msg)
+		m.podModel = pm
+		cmds = append(cmds, pmCmd)
+	case log.Message:
+		lm, lmCmd := m.podModel.logs.Update(msg)
+		m.podModel.logs = lm
+		cmds = append(cmds, lmCmd)
+	default:
+		nm, nmCmd := m.namespaceModel.Update(msg)
+		pm, pmCmd := m.podModel.Update(msg)
+		m.namespaceModel = nm
+		m.podModel = pm
+		cmds = append(cmds, pmCmd, nmCmd)
 	}
-	if !m.isConnected {
-		s, cmd := m.clusterConnectionSpinner.Update(msg)
-		m.clusterConnectionSpinner = s
-		cmds = append(cmds, cmd)
+
+	switch msg.(type) {
+	case namespaceSelectedMsg:
+		m.state = PodSelection
+	case backToNamespaceSelectionMsg:
+		m.state = NamespaceSelection
+		m.podModel.Reset()
 	}
+
 	return m, tea.Batch(cmds...)
 }
 
-func (m K8mpassModel) View() string {
-	s := ""
-	if !m.isConnected {
-		s += m.clusterConnectionSpinner.View()
-		s += "Connecting to the cluster..."
-	} else {
-		s += "Connection successful! Press esc to quit"
+func (m Model) View() string {
+	if m.error != nil {
+		return m.error.Error()
 	}
-	return s
+	switch m.state {
+	case NamespaceSelection:
+		return m.namespaceModel.View()
+	case PodSelection:
+		return m.podModel.View()
+	}
+	return ""
 }
