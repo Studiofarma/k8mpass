@@ -59,7 +59,7 @@ func loadFromFile(context string) userData {
 	if err != nil {
 		return userData{}
 	}
-	preferencesPath := filepath.Join(userDir, ".k8mpass", "namespaces")
+	preferencesPath := filepath.Join(userDir, "k8mpass", "namespaces")
 	err = os.MkdirAll(preferencesPath, os.ModePerm)
 	if err != nil {
 		return userData{}
@@ -92,7 +92,7 @@ func writeLines(currentContext string, lines []string) error {
 	if err != nil {
 		return err
 	}
-	filePath := filepath.Join(userDir, ".k8mpass", "namespaces", fmt.Sprintf("%s_ns.txt", currentContext))
+	filePath := filepath.Join(userDir, "k8mpass", "namespaces", fmt.Sprintf("%s_ns.txt", currentContext))
 	readFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0660)
 	if err != nil {
 		return err

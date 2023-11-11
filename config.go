@@ -55,11 +55,11 @@ func (p *PinnedNamespaceService) Unpin(ns string) error {
 }
 
 func WriteLineToConfigFile(ns string) error {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserCacheDir()
 	if err != nil {
 		return err
 	}
-	configPath := filepath.Join(userHomeDir, ".k8mpass", "config.txt")
+	configPath := filepath.Join(userHomeDir, "k8mpass", "config.txt")
 
 	readFile, err := os.OpenFile(configPath, os.O_RDWR|os.O_APPEND, 0660)
 	if err != nil {
@@ -73,11 +73,11 @@ func WriteLineToConfigFile(ns string) error {
 }
 
 func RemoveLineFromFile(ns string) error {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserCacheDir()
 	if err != nil {
 		return err
 	}
-	configPath := filepath.Join(userHomeDir, ".k8mpass", "config.txt")
+	configPath := filepath.Join(userHomeDir, "k8mpass", "config.txt")
 
 	readFile, err := os.OpenFile(configPath, os.O_RDWR, 0660)
 	if err != nil {
@@ -114,11 +114,11 @@ func RemoveLineFromFile(ns string) error {
 }
 
 func LoadConfigFile() ([]string, error) {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserCacheDir()
 	if err != nil {
 		return nil, err
 	}
-	configPath := filepath.Join(userHomeDir, ".k8mpass", "config.txt")
+	configPath := filepath.Join(userHomeDir, "k8mpass", "config.txt")
 
 	readFile, err := os.Open(configPath)
 	if err != nil {
